@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +19,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import {
   ArrowLeft,
   Edit,
@@ -33,6 +43,9 @@ import {
   RotateCcw,
   Users,
   Gift,
+  Lock,
+  Unlock,
+  AlertTriangle,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -42,6 +55,15 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [userBalance, setUserBalance] = useState(0)
   const [referralEarnings, setReferralEarnings] = useState(0)
+  const [taskEarnings, setTaskEarnings] = useState(0)
+  const [hasClaimedReferralBonus, setHasClaimedReferralBonus] = useState(false)
+  const [referralCodeInput, setReferralCodeInput] = useState("")
+  const [showReferralDialog, setShowReferralDialog] = useState(false)
+  const [referralStatus, setReferralStatus] = useState({
+    hasInvited: false,
+    invitedUsers: [],
+    canClaim: false,
+  })
   const [userInfo, setUserInfo] = useState({
     name: "John Doe",
     phone: "794912***",
@@ -57,8 +79,11 @@ export default function ProfilePage() {
   useEffect(() => {
     const savedBalance = localStorage.getItem("userBalance")
     const savedReferralEarnings = localStorage.getItem("referralEarnings")
+    const savedTaskEarnings = localStorage.getItem("taskEarnings")
     const savedPhone = localStorage.getItem("userPhone")
     const savedReferralCode = localStorage.getItem("userReferralCode")
+    const savedHasClaimedBonus = localStorage.getItem("hasClaimedReferralBonus")
+    const savedReferralStatus = localStorage.getItem("referralStatus")
 
     if (savedBalance) {
       setUserBalance(Number.parseFloat(savedBalance))
@@ -67,22 +92,53 @@ export default function ProfilePage() {
     if (savedReferralEarnings) {
       setReferralEarnings(Number.parseFloat(savedReferralEarnings))
     }
+    if (savedTaskEarnings) {
+      setTaskEarnings(Number.parseFloat(savedTaskEarnings))
+    }
     if (savedPhone) {
       setUserInfo((prev) => ({ ...prev, phone: savedPhone }))
     }
     if (savedReferralCode) {
       setUserInfo((prev) => ({ ...prev, referralCode: savedReferralCode }))
     }
+    if (savedHasClaimedBonus) {
+      setHasClaimedReferralBonus(JSON.parse(savedHasClaimedBonus))
+    }
+    if (savedReferralStatus) {
+      setReferralStatus(JSON.parse(savedReferralStatus))
+    }
+
+    // Check if user has invited someone and can claim bonus
+    checkReferralEligibility()
   }, [])
+
+  const checkReferralEligibility = () => {
+    // Simulate checking if user has invited someone
+    const invitedUsers = JSON.parse(localStorage.getItem("invitedUsers") || "[]")
+    const userReferralCode = localStorage.getItem("userReferralCode") || userInfo.referralCode
+
+    // Check if anyone has used this user's referral code
+    const hasValidInvites = invitedUsers.some((invite) => invite.referrerCode === userReferralCode)
+
+    setReferralStatus({
+      hasInvited: hasValidInvites,
+      invitedUsers: invitedUsers.filter((invite) => invite.referrerCode === userReferralCode),
+      canClaim: hasValidInvites && !hasClaimedReferralBonus,
+    })
+  }
 
   const handleLogout = () => {
     // Clear all user data
     localStorage.removeItem("userBalance")
     localStorage.removeItem("completedTasks")
     localStorage.removeItem("referralEarnings")
+    localStorage.removeItem("taskEarnings")
     localStorage.removeItem("userPhone")
     localStorage.removeItem("userReferralCode")
     localStorage.removeItem("isLoggedIn")
+    localStorage.removeItem("hasClaimedReferralBonus")
+    localStorage.removeItem("referralStatus")
+    localStorage.removeItem("selectedPackage")
 
     // Redirect to login page
     router.push("/")
@@ -93,30 +149,106 @@ export default function ProfilePage() {
     localStorage.setItem("userBalance", "0")
     localStorage.setItem("completedTasks", "[]")
     localStorage.setItem("referralEarnings", "0")
+    localStorage.setItem("taskEarnings", "0")
+    localStorage.setItem("hasClaimedReferralBonus", "false")
+    localStorage.removeItem("referralStatus")
 
     // Update state
     setUserBalance(0)
     setReferralEarnings(0)
+    setTaskEarnings(0)
+    setHasClaimedReferralBonus(false)
+    setReferralStatus({
+      hasInvited: false,
+      invitedUsers: [],
+      canClaim: false,
+    })
     setUserInfo((prev) => ({ ...prev, totalEarnings: "KES 0.00" }))
 
     alert("Account reset successfully! Your balance and tasks have been cleared.")
   }
 
-  const generateReferralBonus = () => {
-    // Simulate referral bonus (10% of user's current balance or minimum 50 KES)
-    const bonus = Math.max(userBalance * 0.1, 50)
-    const newReferralEarnings = referralEarnings + bonus
-    const newBalance = userBalance + bonus
+  const validateReferralCode = () => {
+    const userReferralCode = localStorage.getItem("userReferralCode") || userInfo.referralCode
+
+    if (referralCodeInput === userReferralCode && referralStatus.hasInvited && !hasClaimedReferralBonus) {
+      return true
+    }
+    return false
+  }
+
+  const claimReferralBonus = () => {
+    if (!validateReferralCode()) {
+      alert("Invalid referral code or you're not eligible for the bonus!")
+      return
+    }
+
+    // Calculate bonus based on number of successful referrals
+    const bonusPerReferral = 150 // KES 150 per successful referral
+    const totalBonus = referralStatus.invitedUsers.length * bonusPerReferral
+
+    const newReferralEarnings = referralEarnings + totalBonus
+    const newBalance = userBalance + totalBonus
 
     setReferralEarnings(newReferralEarnings)
     setUserBalance(newBalance)
+    setHasClaimedReferralBonus(true)
 
     // Save to localStorage
     localStorage.setItem("referralEarnings", newReferralEarnings.toString())
     localStorage.setItem("userBalance", newBalance.toString())
+    localStorage.setItem("hasClaimedReferralBonus", "true")
 
-    alert(`Referral bonus earned! You received KES ${bonus.toFixed(2)}`)
+    // Update referral status
+    const updatedStatus = { ...referralStatus, canClaim: false }
+    setReferralStatus(updatedStatus)
+    localStorage.setItem("referralStatus", JSON.stringify(updatedStatus))
+
+    setShowReferralDialog(false)
+    setReferralCodeInput("")
+
+    alert(
+      `Congratulations! You earned KES ${totalBonus.toFixed(2)} from ${referralStatus.invitedUsers.length} successful referral(s)!`,
+    )
   }
+
+  const getReferralBonusStatus = () => {
+    if (hasClaimedReferralBonus) {
+      return {
+        text: "Bonus Already Claimed",
+        color: "text-gray-500",
+        bgColor: "bg-gray-100",
+        icon: Lock,
+        disabled: true,
+      }
+    } else if (!referralStatus.hasInvited) {
+      return {
+        text: "No Referrals Yet",
+        color: "text-orange-600",
+        bgColor: "bg-orange-50",
+        icon: Lock,
+        disabled: true,
+      }
+    } else if (referralStatus.canClaim) {
+      return {
+        text: "Claim Referral Bonus",
+        color: "text-green-600",
+        bgColor: "bg-green-50",
+        icon: Unlock,
+        disabled: false,
+      }
+    } else {
+      return {
+        text: "Bonus Locked",
+        color: "text-red-600",
+        bgColor: "bg-red-50",
+        icon: Lock,
+        disabled: true,
+      }
+    }
+  }
+
+  const bonusStatus = getReferralBonusStatus()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -197,39 +329,139 @@ export default function ProfilePage() {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-sm text-gray-600">Total Earnings</div>
+                <div className="text-sm text-gray-600">Total Balance</div>
                 <div className="text-lg font-bold text-green-600">KES {userBalance.toFixed(2)}</div>
               </div>
               <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-sm text-gray-600">Active Package</div>
-                <div className="text-lg font-bold text-blue-600">{userInfo.activePackage}</div>
+                <div className="text-sm text-gray-600">Task Earnings</div>
+                <div className="text-lg font-bold text-blue-600">KES {taskEarnings.toFixed(2)}</div>
               </div>
               <div className="text-center p-3 bg-purple-50 rounded-lg">
-                <div className="text-sm text-gray-600">Join Date</div>
-                <div className="text-lg font-bold text-purple-600">{userInfo.joinDate}</div>
+                <div className="text-sm text-gray-600">Referral Earnings</div>
+                <div className="text-lg font-bold text-purple-600">KES {referralEarnings.toFixed(2)}</div>
               </div>
               <div className="text-center p-3 bg-orange-50 rounded-lg">
-                <div className="text-sm text-gray-600">Referral Earnings</div>
-                <div className="text-lg font-bold text-orange-600">KES {referralEarnings.toFixed(2)}</div>
+                <div className="text-sm text-gray-600">Active Package</div>
+                <div className="text-lg font-bold text-orange-600">{userInfo.activePackage}</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Referral Section */}
-        <Card className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold mb-2">Earn Referral Bonus</h3>
-                <p className="text-sm opacity-90">Invite friends and earn commission!</p>
+        {/* Referral Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="h-5 w-5 mr-2" />
+              Referral Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Total Referrals:</span>
+                <span className="font-bold">{referralStatus.invitedUsers.length}</span>
               </div>
-              <Users className="h-8 w-8" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Bonus Status:</span>
+                <Badge className={`${bonusStatus.bgColor} ${bonusStatus.color}`}>
+                  <bonusStatus.icon className="h-3 w-3 mr-1" />
+                  {hasClaimedReferralBonus ? "Claimed" : referralStatus.canClaim ? "Available" : "Locked"}
+                </Badge>
+              </div>
+
+              {referralStatus.invitedUsers.length > 0 && (
+                <div className="mt-3">
+                  <div className="text-sm font-medium text-gray-700 mb-2">Your Referrals:</div>
+                  <div className="space-y-1">
+                    {referralStatus.invitedUsers.map((user, index) => (
+                      <div key={index} className="text-xs bg-gray-50 p-2 rounded">
+                        Phone: {user.phone} • Joined: {user.joinDate}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <Button onClick={generateReferralBonus} className="mt-4 bg-white text-orange-600 hover:bg-gray-100">
-              <Gift className="h-4 w-4 mr-2" />
-              Claim Referral Bonus
-            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Referral Bonus Section */}
+        <Card className={`${bonusStatus.bgColor} border-2`}>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className={`text-lg font-bold ${bonusStatus.color}`}>Referral Bonus</h3>
+                <p className="text-sm opacity-75">
+                  {hasClaimedReferralBonus
+                    ? "You have already claimed your referral bonus"
+                    : referralStatus.hasInvited
+                      ? `Earn KES ${referralStatus.invitedUsers.length * 150} from your referrals`
+                      : "Invite friends to unlock referral bonus"}
+                </p>
+              </div>
+              <bonusStatus.icon className={`h-8 w-8 ${bonusStatus.color}`} />
+            </div>
+
+            {!hasClaimedReferralBonus && referralStatus.hasInvited && (
+              <Alert className="mb-4 border-green-200 bg-green-50">
+                <AlertTriangle className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  You have {referralStatus.invitedUsers.length} successful referral(s). Enter your referral code to
+                  claim KES {referralStatus.invitedUsers.length * 150} bonus!
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Dialog open={showReferralDialog} onOpenChange={setShowReferralDialog}>
+              <DialogTrigger asChild>
+                <Button
+                  className={`w-full ${bonusStatus.color} ${bonusStatus.bgColor} border-2`}
+                  disabled={bonusStatus.disabled}
+                  variant="outline"
+                >
+                  <bonusStatus.icon className="h-4 w-4 mr-2" />
+                  {bonusStatus.text}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center">
+                    <Gift className="h-5 w-5 mr-2 text-green-600" />
+                    Claim Referral Bonus
+                  </DialogTitle>
+                  <DialogDescription>
+                    Enter your referral code to claim your bonus of KES {referralStatus.invitedUsers.length * 150}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="referralCode">Your Referral Code</Label>
+                    <Input
+                      id="referralCode"
+                      value={referralCodeInput}
+                      onChange={(e) => setReferralCodeInput(e.target.value)}
+                      placeholder="Enter your referral code"
+                      className="font-mono"
+                    />
+                  </div>
+                  <Alert className="border-blue-200 bg-blue-50">
+                    <AlertTriangle className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-800">
+                      This bonus can only be claimed once. Make sure you enter the correct referral code.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowReferralDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={claimReferralBonus} className="bg-green-600 hover:bg-green-700">
+                    Claim Bonus
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
 

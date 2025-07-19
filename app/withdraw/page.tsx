@@ -7,7 +7,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, AlertCircle, Home, FileText, Trophy, TrendingUp, User } from "lucide-react"
+import {
+  ArrowLeft,
+  AlertCircle,
+  Home,
+  FileText,
+  Trophy,
+  TrendingUp,
+  User,
+  ArrowUpRight,
+  ArrowDownLeft,
+} from "lucide-react"
 import Link from "next/link"
 
 export default function WithdrawPage() {
@@ -17,6 +27,7 @@ export default function WithdrawPage() {
   const [userBalance, setUserBalance] = useState(0)
 
   const minWithdrawal = 120
+  const processingFeeRate = 0.1 // 10% processing fee
 
   // Load balance from localStorage
   useEffect(() => {
@@ -34,6 +45,15 @@ export default function WithdrawPage() {
 
   const handleQuickAmount = (amount: number) => {
     setWithdrawAmount(amount.toString())
+  }
+
+  const calculateNetAmount = (amount: number) => {
+    const fee = amount * processingFeeRate
+    return amount - fee
+  }
+
+  const calculateFee = (amount: number) => {
+    return amount * processingFeeRate
   }
 
   const handleWithdraw = () => {
@@ -54,15 +74,26 @@ export default function WithdrawPage() {
       return
     }
 
+    const fee = calculateFee(amount)
+    const netAmount = calculateNetAmount(amount)
+
     // Process withdrawal
     console.log("Processing withdrawal:", {
-      amount: withdrawAmount,
+      grossAmount: amount,
+      processingFee: fee,
+      netAmount: netAmount,
       method: paymentMethod,
       password: fundPassword,
     })
 
-    alert(`Withdrawal request of KES ${amount} submitted successfully!`)
+    alert(
+      `Withdrawal request submitted!\nGross Amount: KES ${amount}\nProcessing Fee (10%): KES ${fee.toFixed(2)}\nNet Amount: KES ${netAmount.toFixed(2)}`,
+    )
   }
+
+  const currentAmount = Number.parseFloat(withdrawAmount) || 0
+  const currentFee = calculateFee(currentAmount)
+  const currentNetAmount = calculateNetAmount(currentAmount)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -116,6 +147,28 @@ export default function WithdrawPage() {
             onChange={(e) => setWithdrawAmount(e.target.value)}
             className="text-lg p-4"
           />
+
+          {/* Fee Calculation Display */}
+          {currentAmount > 0 && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Withdrawal Amount:</span>
+                    <span className="font-medium">KES {currentAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-red-600">
+                    <span>Processing Fee (10%):</span>
+                    <span className="font-medium">- KES {currentFee.toFixed(2)}</span>
+                  </div>
+                  <div className="border-t pt-2 flex justify-between font-bold text-green-600">
+                    <span>Net Amount:</span>
+                    <span>KES {currentNetAmount.toFixed(2)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Quick Amount Selection */}
           <div className="space-y-3">
@@ -185,7 +238,7 @@ export default function WithdrawPage() {
               </div>
               <div className="flex justify-between">
                 <span>Processing Fee:</span>
-                <span className="font-medium">Free</span>
+                <span className="font-medium text-red-600">10% of withdrawal amount</span>
               </div>
               <div className="flex justify-between">
                 <span>Admin Contact:</span>
@@ -214,6 +267,14 @@ export default function WithdrawPage() {
           <Link href="/profits" className="flex flex-col items-center p-2 text-gray-600">
             <TrendingUp className="h-5 w-5" />
             <span className="text-xs mt-1">Profits</span>
+          </Link>
+          <Link href="/withdraw" className="flex flex-col items-center p-2 text-blue-600">
+            <ArrowDownLeft className="h-4 w-4" />
+            <span className="text-xs mt-1">Withdraw</span>
+          </Link>
+          <Link href="/recharge" className="flex flex-col items-center p-2 text-gray-600">
+            <ArrowUpRight className="h-4 w-4" />
+            <span className="text-xs mt-1">Deposit</span>
           </Link>
           <Link href="/profile" className="flex flex-col items-center p-2 text-gray-600">
             <User className="h-5 w-5" />
