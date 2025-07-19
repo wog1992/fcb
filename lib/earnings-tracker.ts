@@ -1,4 +1,13 @@
 // Earnings Tracking System
+export interface Transaction {
+  id: string
+  type: "task" | "referral" | "deposit" | "withdrawal"
+  amount: number
+  description: string
+  timestamp: string
+  date: string
+}
+
 export interface EarningRecord {
   id: string
   userId: string
@@ -19,11 +28,21 @@ export interface UserEarnings {
   earningsHistory: EarningRecord[]
 }
 
+export interface EarningsBreakdown {
+  taskEarnings: number
+  referralEarnings: number
+  depositAmount: number
+  totalBalance: number
+  totalWithdrawn: number
+}
+
 export class EarningsTracker {
-  private static STORAGE_KEY_EARNINGS = "userEarningsHistory"
-  private static STORAGE_KEY_BALANCE = "userBalance"
-  private static STORAGE_KEY_TASK_EARNINGS = "taskEarnings"
-  private static STORAGE_KEY_REFERRAL_EARNINGS = "referralEarnings"
+  private static readonly TASK_REWARD = 70 // KES per task
+  private static readonly REFERRAL_BONUS = 150 // KES per referral
+  private static readonly STORAGE_KEY_EARNINGS = "userEarningsHistory"
+  private static readonly STORAGE_KEY_BALANCE = "userBalance"
+  private static readonly STORAGE_KEY_TASK_EARNINGS = "taskEarnings"
+  private static readonly STORAGE_KEY_REFERRAL_EARNINGS = "referralEarnings"
 
   // Add a new earning record
   static addEarning(
@@ -106,75 +125,57 @@ export class EarningsTracker {
   }
 
   // Validate earning legitimacy (for admin fraud detection)
-  static validateEarnings(userId: string): {
-    isLegitimate: boolean
-    suspiciousActivities: string[]
-    riskLevel: "low" | "medium" | "high"
-  } {
-    const earnings = this.getUserEarnings()
-    const suspiciousActivities: string[] = []
-    let riskLevel: "low" | "medium" | "high" = "low"
-
-    // Check for unrealistic task earnings
-    const averageTaskEarning = 70 // KES per task
-    const maxTasksPerDay = 10
+  static validateEarnings(userPhone: string): { isValid: boolean; riskScore: number; issues: string[] } {
+    const breakdown = this.getEarningsBreakdown()
+    const completedTasks = JSON.parse(localStorage.getItem("completedTasks") || "[]")
     const accountAge = this.getAccountAge()
-    const maxPossibleTaskEarnings = maxTasksPerDay * averageTaskEarning * accountAge
 
-    if (earnings.taskEarnings > maxPossibleTaskEarnings * 1.2) {
-      suspiciousActivities.push("Task earnings exceed realistic limits")
-      riskLevel = "high"
+    const issues: string[] = []
+    let riskScore = 0
+
+    // Check task earnings vs completed tasks
+    const expectedTaskEarnings = completedTasks.length * this.TASK_REWARD
+    if (breakdown.taskEarnings > expectedTaskEarnings) {
+      issues.push("Task earnings exceed completed tasks")
+      riskScore += 30
     }
 
-    // Check referral earnings legitimacy
-    const referralHistory = this.getEarningsHistory().filter((record) => record.type === "referral")
-    if (referralHistory.length > 0 && earnings.referralEarnings === 0) {
-      suspiciousActivities.push("Referral records exist but no referral earnings")
-      riskLevel = "medium"
+    // Check account age vs earnings
+    if (accountAge < 7 && breakdown.totalBalance > 1000) {
+      issues.push("High earnings for new account")
+      riskScore += 25
     }
 
-    // Check for rapid balance increases
-    const recentEarnings = this.getEarningsHistory()
-      .filter((record) => {
-        const recordDate = new Date(record.timestamp)
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-        return recordDate > oneDayAgo
-      })
-      .reduce((sum, record) => sum + record.amount, 0)
-
-    if (recentEarnings > 1000) {
-      // More than KES 1000 in 24 hours
-      suspiciousActivities.push("Unusually high earnings in 24 hours")
-      riskLevel = riskLevel === "high" ? "high" : "medium"
+    // Check earnings vs deposits ratio
+    const earnedAmount = breakdown.taskEarnings + breakdown.referralEarnings
+    if (earnedAmount > breakdown.depositAmount * 10 && breakdown.depositAmount > 0) {
+      issues.push("Earnings significantly exceed deposits")
+      riskScore += 20
     }
 
-    // Check deposit to earnings ratio
-    if (earnings.depositAmount > 0) {
-      const earningsRatio = (earnings.taskEarnings + earnings.referralEarnings) / earnings.depositAmount
-      if (earningsRatio > 2) {
-        // Earnings more than 200% of deposits
-        suspiciousActivities.push("Earnings significantly exceed deposits")
-        riskLevel = "high"
-      }
+    // Check withdrawal patterns
+    if (breakdown.totalWithdrawn > breakdown.totalBalance * 2) {
+      issues.push("Withdrawal amount suspicious")
+      riskScore += 25
     }
 
     return {
-      isLegitimate: suspiciousActivities.length === 0,
-      suspiciousActivities,
-      riskLevel,
+      isValid: riskScore < 50,
+      riskScore: Math.min(riskScore, 100),
+      issues,
     }
   }
 
   // Get account age in days
   private static getAccountAge(): number {
-    const joinDate = localStorage.getItem("userJoinDate")
-    if (!joinDate) return 1
+    // Calculate days since account creation
+    const joinDate = localStorage.getItem("joinDate")
+    if (!joinDate) return 0
 
     const join = new Date(joinDate)
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - join.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return Math.max(diffDays, 1)
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
   // Generate unique ID for earnings records
@@ -188,6 +189,7 @@ export class EarningsTracker {
     localStorage.setItem(this.STORAGE_KEY_BALANCE, "0")
     localStorage.setItem(this.STORAGE_KEY_TASK_EARNINGS, "0")
     localStorage.setItem(this.STORAGE_KEY_REFERRAL_EARNINGS, "0")
+    localStorage.removeItem("transactions")
   }
 
   // Get earnings by date range
@@ -216,5 +218,161 @@ export class EarningsTracker {
       { userId: "07****5678", totalEarnings: 1800, taskEarnings: 1400, referralEarnings: 400 },
       { userId: "07****9012", totalEarnings: 1200, taskEarnings: 1050, referralEarnings: 150 },
     ]
+  }
+
+  // Add task earning
+  static addTaskEarning(taskId: string, taskName: string): boolean {
+    try {
+      const transaction: Transaction = {
+        id: `task_${Date.now()}`,
+        type: "task",
+        amount: this.TASK_REWARD,
+        description: `Completed task: ${taskName}`,
+        timestamp: new Date().toISOString(),
+        date: new Date().toLocaleDateString(),
+      }
+
+      this.addTransaction(transaction)
+      this.updateTaskEarnings(this.TASK_REWARD)
+      this.updateTotalBalance(this.TASK_REWARD)
+
+      return true
+    } catch (error) {
+      console.error("Error adding task earning:", error)
+      return false
+    }
+  }
+
+  // Add referral earning
+  static addReferralEarning(referralPhone: string): boolean {
+    try {
+      const transaction: Transaction = {
+        id: `referral_${Date.now()}`,
+        type: "referral",
+        amount: this.REFERRAL_BONUS,
+        description: `Referral bonus for ${referralPhone}`,
+        timestamp: new Date().toISOString(),
+        date: new Date().toLocaleDateString(),
+      }
+
+      this.addTransaction(transaction)
+      this.updateReferralEarnings(this.REFERRAL_BONUS)
+      this.updateTotalBalance(this.REFERRAL_BONUS)
+
+      return true
+    } catch (error) {
+      console.error("Error adding referral earning:", error)
+      return false
+    }
+  }
+
+  // Add deposit
+  static addDeposit(amount: number, method: string): boolean {
+    try {
+      const transaction: Transaction = {
+        id: `deposit_${Date.now()}`,
+        type: "deposit",
+        amount: amount,
+        description: `Deposit via ${method}`,
+        timestamp: new Date().toISOString(),
+        date: new Date().toLocaleDateString(),
+      }
+
+      this.addTransaction(transaction)
+      this.updateTotalBalance(amount)
+
+      return true
+    } catch (error) {
+      console.error("Error adding deposit:", error)
+      return false
+    }
+  }
+
+  // Add withdrawal
+  static addWithdrawal(amount: number, method: string): boolean {
+    try {
+      const transaction: Transaction = {
+        id: `withdrawal_${Date.now()}`,
+        type: "withdrawal",
+        amount: -amount, // Negative for withdrawals
+        description: `Withdrawal via ${method}`,
+        timestamp: new Date().toISOString(),
+        date: new Date().toLocaleDateString(),
+      }
+
+      this.addTransaction(transaction)
+      this.updateTotalBalance(-amount)
+
+      return true
+    } catch (error) {
+      console.error("Error adding withdrawal:", error)
+      return false
+    }
+  }
+
+  private static addTransaction(transaction: Transaction): void {
+    const transactions = this.getAllTransactions()
+    transactions.unshift(transaction) // Add to beginning
+    localStorage.setItem("transactions", JSON.stringify(transactions))
+  }
+
+  static getAllTransactions(): Transaction[] {
+    try {
+      const stored = localStorage.getItem("transactions")
+      return stored ? JSON.parse(stored) : []
+    } catch (error) {
+      console.error("Error getting transactions:", error)
+      return []
+    }
+  }
+
+  static getEarningsBreakdown(): EarningsBreakdown {
+    const taskEarnings = Number.parseFloat(localStorage.getItem("taskEarnings") || "0")
+    const referralEarnings = Number.parseFloat(localStorage.getItem("referralEarnings") || "0")
+    const totalBalance = Number.parseFloat(localStorage.getItem("userBalance") || "0")
+
+    // Calculate deposits and withdrawals from transactions
+    const transactions = this.getAllTransactions()
+    const deposits = transactions.filter((t) => t.type === "deposit").reduce((sum, t) => sum + t.amount, 0)
+
+    const withdrawals = transactions
+      .filter((t) => t.type === "withdrawal")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+
+    return {
+      taskEarnings,
+      referralEarnings,
+      depositAmount: deposits,
+      totalBalance,
+      totalWithdrawn: withdrawals,
+    }
+  }
+
+  private static updateTaskEarnings(amount: number): void {
+    const current = Number.parseFloat(localStorage.getItem("taskEarnings") || "0")
+    localStorage.setItem("taskEarnings", (current + amount).toString())
+  }
+
+  private static updateReferralEarnings(amount: number): void {
+    const current = Number.parseFloat(localStorage.getItem("referralEarnings") || "0")
+    localStorage.setItem("referralEarnings", (current + amount).toString())
+  }
+
+  private static updateTotalBalance(amount: number): void {
+    const current = Number.parseFloat(localStorage.getItem("userBalance") || "0")
+    localStorage.setItem("userBalance", (current + amount).toString())
+  }
+
+  static getRecentTransactions(limit = 10): Transaction[] {
+    return this.getAllTransactions().slice(0, limit)
+  }
+
+  static getTransactionsByType(type: Transaction["type"]): Transaction[] {
+    return this.getAllTransactions().filter((t) => t.type === type)
+  }
+
+  static getTotalEarnings(): number {
+    const breakdown = this.getEarningsBreakdown()
+    return breakdown.taskEarnings + breakdown.referralEarnings
   }
 }

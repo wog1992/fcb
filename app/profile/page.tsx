@@ -251,9 +251,9 @@ export default function ProfilePage() {
   const bonusStatus = getReferralBonusStatus()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Link href="/dashboard">
@@ -261,7 +261,7 @@ export default function ProfilePage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <h1 className="text-xl font-bold">Personal Information</h1>
+            <h1 className="text-lg font-bold">Personal Information</h1>
           </div>
           <Button
             variant="ghost"
@@ -274,48 +274,58 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-3 space-y-3 overflow-y-auto">
         {/* Profile Card */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-16 w-16">
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-12 w-12">
                 <AvatarImage src="/placeholder-user.jpg" />
-                <AvatarFallback className="text-lg">{userInfo.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="text-sm">{userInfo.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>
-                <h2 className="text-xl font-bold">{userInfo.name}</h2>
-                <Badge className="mt-1">{userInfo.identity}</Badge>
+                <h2 className="text-lg font-bold">{userInfo.name}</h2>
+                <Badge className="mt-1 text-xs">{userInfo.identity}</Badge>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+          <CardContent className="space-y-3 pt-0">
+            <div className="grid grid-cols-1 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="name" className="text-xs">
+                  Full Name
+                </Label>
                 <Input
                   id="name"
                   value={userInfo.name}
                   onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
                   disabled={!isEditing}
+                  className="text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" value={userInfo.phone} disabled />
+              <div className="space-y-1">
+                <Label htmlFor="phone" className="text-xs">
+                  Phone Number
+                </Label>
+                <Input id="phone" value={userInfo.phone} disabled className="text-sm" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+              <div className="space-y-1">
+                <Label htmlFor="email" className="text-xs">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   value={userInfo.email}
                   onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
                   disabled={!isEditing}
+                  className="text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="referral">Referral Code</Label>
-                <Input id="referral" value={userInfo.referralCode} disabled />
+              <div className="space-y-1">
+                <Label htmlFor="referral" className="text-xs">
+                  Referral Code
+                </Label>
+                <Input id="referral" value={userInfo.referralCode} disabled className="text-sm font-mono" />
               </div>
             </div>
           </CardContent>
@@ -323,26 +333,26 @@ export default function ProfilePage() {
 
         {/* Account Summary */}
         <Card>
-          <CardHeader>
-            <CardTitle>Account Summary</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Account Summary</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-sm text-gray-600">Total Balance</div>
-                <div className="text-lg font-bold text-green-600">KES {userBalance.toFixed(2)}</div>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="text-center p-2 bg-green-50 rounded-lg">
+                <div className="text-xs text-gray-600">Total Balance</div>
+                <div className="text-sm font-bold text-green-600">KES {userBalance.toFixed(2)}</div>
               </div>
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-sm text-gray-600">Task Earnings</div>
-                <div className="text-lg font-bold text-blue-600">KES {taskEarnings.toFixed(2)}</div>
+              <div className="text-center p-2 bg-blue-50 rounded-lg">
+                <div className="text-xs text-gray-600">Task Earnings</div>
+                <div className="text-sm font-bold text-blue-600">KES {taskEarnings.toFixed(2)}</div>
               </div>
-              <div className="text-center p-3 bg-purple-50 rounded-lg">
-                <div className="text-sm text-gray-600">Referral Earnings</div>
-                <div className="text-lg font-bold text-purple-600">KES {referralEarnings.toFixed(2)}</div>
+              <div className="text-center p-2 bg-purple-50 rounded-lg">
+                <div className="text-xs text-gray-600">Referral Earnings</div>
+                <div className="text-sm font-bold text-purple-600">KES {referralEarnings.toFixed(2)}</div>
               </div>
-              <div className="text-center p-3 bg-orange-50 rounded-lg">
-                <div className="text-sm text-gray-600">Active Package</div>
-                <div className="text-lg font-bold text-orange-600">{userInfo.activePackage}</div>
+              <div className="text-center p-2 bg-orange-50 rounded-lg">
+                <div className="text-xs text-gray-600">Active Package</div>
+                <div className="text-sm font-bold text-orange-600">{userInfo.activePackage}</div>
               </div>
             </div>
           </CardContent>
@@ -350,29 +360,29 @@ export default function ProfilePage() {
 
         {/* Referral Status */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Users className="h-5 w-5 mr-2" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-base">
+              <Users className="h-4 w-4 mr-2" />
               Referral Status
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="pt-0">
+            <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total Referrals:</span>
-                <span className="font-bold">{referralStatus.invitedUsers.length}</span>
+                <span className="text-xs text-gray-600">Total Referrals:</span>
+                <span className="font-bold text-sm">{referralStatus.invitedUsers.length}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Bonus Status:</span>
-                <Badge className={`${bonusStatus.bgColor} ${bonusStatus.color}`}>
+                <span className="text-xs text-gray-600">Bonus Status:</span>
+                <Badge className={`${bonusStatus.bgColor} ${bonusStatus.color} text-xs`}>
                   <bonusStatus.icon className="h-3 w-3 mr-1" />
                   {hasClaimedReferralBonus ? "Claimed" : referralStatus.canClaim ? "Available" : "Locked"}
                 </Badge>
               </div>
 
               {referralStatus.invitedUsers.length > 0 && (
-                <div className="mt-3">
-                  <div className="text-sm font-medium text-gray-700 mb-2">Your Referrals:</div>
+                <div className="mt-2">
+                  <div className="text-xs font-medium text-gray-700 mb-1">Your Referrals:</div>
                   <div className="space-y-1">
                     {referralStatus.invitedUsers.map((user, index) => (
                       <div key={index} className="text-xs bg-gray-50 p-2 rounded">
@@ -388,11 +398,11 @@ export default function ProfilePage() {
 
         {/* Referral Bonus Section */}
         <Card className={`${bonusStatus.bgColor} border-2`}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className={`text-lg font-bold ${bonusStatus.color}`}>Referral Bonus</h3>
-                <p className="text-sm opacity-75">
+                <h3 className={`text-base font-bold ${bonusStatus.color}`}>Referral Bonus</h3>
+                <p className="text-xs opacity-75">
                   {hasClaimedReferralBonus
                     ? "You have already claimed your referral bonus"
                     : referralStatus.hasInvited
@@ -400,13 +410,13 @@ export default function ProfilePage() {
                       : "Invite friends to unlock referral bonus"}
                 </p>
               </div>
-              <bonusStatus.icon className={`h-8 w-8 ${bonusStatus.color}`} />
+              <bonusStatus.icon className={`h-6 w-6 ${bonusStatus.color}`} />
             </div>
 
             {!hasClaimedReferralBonus && referralStatus.hasInvited && (
-              <Alert className="mb-4 border-green-200 bg-green-50">
+              <Alert className="mb-3 border-green-200 bg-green-50">
                 <AlertTriangle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
+                <AlertDescription className="text-green-800 text-xs">
                   You have {referralStatus.invitedUsers.length} successful referral(s). Enter your referral code to
                   claim KES {referralStatus.invitedUsers.length * 150} bonus!
                 </AlertDescription>
@@ -416,9 +426,10 @@ export default function ProfilePage() {
             <Dialog open={showReferralDialog} onOpenChange={setShowReferralDialog}>
               <DialogTrigger asChild>
                 <Button
-                  className={`w-full ${bonusStatus.color} ${bonusStatus.bgColor} border-2`}
+                  className={`w-full ${bonusStatus.color} ${bonusStatus.bgColor} border-2 text-sm`}
                   disabled={bonusStatus.disabled}
                   variant="outline"
+                  size="sm"
                 >
                   <bonusStatus.icon className="h-4 w-4 mr-2" />
                   {bonusStatus.text}
@@ -467,14 +478,14 @@ export default function ProfilePage() {
 
         {/* Account Actions */}
         <Card>
-          <CardHeader>
-            <CardTitle>Account Actions</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Account Actions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2 pt-0">
             {/* Account Reset */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-start bg-transparent">
+                <Button variant="outline" className="w-full justify-start bg-transparent text-sm h-10">
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Reset Account
                 </Button>
@@ -501,7 +512,7 @@ export default function ProfilePage() {
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 bg-transparent"
+                  className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 bg-transparent text-sm h-10"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
@@ -527,7 +538,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-20">
         <div className="flex justify-around py-2">
           <Link href="/dashboard" className="flex flex-col items-center p-2 text-gray-600">
             <Home className="h-5 w-5" />
@@ -555,7 +566,7 @@ export default function ProfilePage() {
           </Link>
           <Link href="/profile" className="flex flex-col items-center p-2 text-blue-600">
             <User className="h-5 w-5" />
-            <span className="text-xs mt-1">My</span>
+            <span className="text-xs mt-1">Profile</span>
           </Link>
         </div>
       </div>

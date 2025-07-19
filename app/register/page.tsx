@@ -5,47 +5,67 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Eye, EyeOff, User, Phone, Mail, Lock, Gift, CheckCircle, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ReferralSystem } from "@/lib/referral-system"
 
 export default function RegisterPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-
-  const [formData, setFormData] = useState({
-    phone: "",
-    password: "",
-    confirmPassword: "",
-    fundPassword: "",
-    referralCode: "",
-  })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [showFundPassword, setShowFundPassword] = useState(false)
-  const [agreeToTerms, setAgreeToTerms] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [referralCode, setReferralCode] = useState("")
+  const [hasReferralCode, setHasReferralCode] = useState(false)
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    referralCode: "",
+    agreeToTerms: false,
+  })
+
+  const [errors, setErrors] = useState({})
 
   // Check for referral code in URL
   useEffect(() => {
     const refCode = searchParams.get("ref")
-    if (refCode && ReferralSystem.isValidReferralCode(refCode)) {
+    if (refCode) {
+      setReferralCode(refCode)
+      setHasReferralCode(true)
       setFormData((prev) => ({ ...prev, referralCode: refCode }))
     }
   }, [searchParams])
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors = {}
 
-    // Phone validation
+    // Full name validation
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Full name is required"
+    } else if (formData.fullName.trim().length < 2) {
+      newErrors.fullName = "Full name must be at least 2 characters"
+    }
+
+    // Phone validation (Kenyan format)
+    const phoneRegex = /^(\+254|254|0)[17]\d{8}$/
     if (!formData.phone) {
       newErrors.phone = "Phone number is required"
-    } else if (!/^(\+254|0)[17]\d{8}$/.test(formData.phone)) {
+    } else if (!phoneRegex.test(formData.phone.replace(/\s/g, ""))) {
       newErrors.phone = "Please enter a valid Kenyan phone number"
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!formData.email) {
+      newErrors.email = "Email is required"
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address"
     }
 
     // Password validation
@@ -56,32 +76,22 @@ export default function RegisterPage() {
     }
 
     // Confirm password validation
-    if (formData.password !== formData.confirmPassword) {
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password"
+    } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match"
     }
 
-    // Fund password validation
-    if (!formData.fundPassword) {
-      newErrors.fundPassword = "Fund password is required"
-    } else if (formData.fundPassword.length < 4) {
-      newErrors.fundPassword = "Fund password must be at least 4 characters"
-    }
-
-    // Referral code validation (optional but if provided, must be valid)
-    if (formData.referralCode && !ReferralSystem.isValidReferralCode(formData.referralCode)) {
-      newErrors.referralCode = "Invalid referral code format"
-    }
-
-    // Terms agreement
-    if (!agreeToTerms) {
-      newErrors.terms = "You must agree to the terms and conditions"
+    // Terms agreement validation
+    if (!formData.agreeToTerms) {
+      newErrors.agreeToTerms = "You must agree to the terms and conditions"
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {
@@ -89,52 +99,68 @@ export default function RegisterPage() {
     }
   }
 
+  const formatPhoneNumber = (phone) => {
+    // Convert to standard format
+    let formatted = phone.replace(/\s/g, "")
+    if (formatted.startsWith("0")) {
+      formatted = "254" + formatted.substring(1)
+    } else if (formatted.startsWith("+254")) {
+      formatted = formatted.substring(1)
+    }
+    return formatted
+  }
+
   const handleRegister = async () => {
-    if (!validateForm()) return
+    if (!validateForm()) {
+      return
+    }
 
     setIsLoading(true)
 
     try {
-      // Simulate API call
+      // Simulate registration process
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      // Generate unique user ID
-      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      const formattedPhone = formatPhoneNumber(formData.phone)
 
-      // Store user data
+      // Generate unique referral code for new user
+      const newUserReferralCode = `FCB${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+
+      // Save user data
       const userData = {
-        userId,
-        phone: formData.phone,
-        password: formData.password, // In real app, this should be hashed
-        fundPassword: formData.fundPassword, // In real app, this should be hashed
-        referralCode: formData.referralCode,
-        registrationDate: new Date().toISOString(),
-        balance: 0,
-        isActive: true,
+        fullName: formData.fullName,
+        phone: formattedPhone,
+        email: formData.email,
+        referralCode: newUserReferralCode,
+        joinDate: new Date().toLocaleDateString(),
+        isLoggedIn: true,
       }
 
-      localStorage.setItem("currentUser", JSON.stringify(userData))
-      localStorage.setItem("userBalance", "0")
-      localStorage.setItem("taskEarnings", "0")
-      localStorage.setItem("referralEarnings", "0")
-      localStorage.setItem("completedTasks", "0")
-
-      // Generate referral code for new user
-      const newUserReferralCode = ReferralSystem.generateReferralCode()
+      // Save to localStorage
+      localStorage.setItem("isLoggedIn", "true")
+      localStorage.setItem("userPhone", formattedPhone)
       localStorage.setItem("userReferralCode", newUserReferralCode)
+      localStorage.setItem("userBalance", "0")
+      localStorage.setItem("completedTasks", "[]")
+      localStorage.setItem("referralEarnings", "0")
+      localStorage.setItem("taskEarnings", "0")
 
-      // If user used a referral code, add them to the referrer's list
-      if (formData.referralCode) {
-        ReferralSystem.addReferral(formData.phone, formData.referralCode, userId)
+      // Handle referral if provided
+      if (formData.referralCode && formData.referralCode.trim()) {
+        const invitedUsers = JSON.parse(localStorage.getItem("invitedUsers") || "[]")
+        const newInvite = {
+          phone: formattedPhone,
+          referrerCode: formData.referralCode.trim(),
+          joinDate: new Date().toLocaleDateString(),
+          joinTime: new Date().toLocaleTimeString(),
+        }
+        invitedUsers.push(newInvite)
+        localStorage.setItem("invitedUsers", JSON.stringify(invitedUsers))
       }
 
-      // Show success message
       alert("Registration successful! Welcome to FCB VIP Intern2Days!")
-
-      // Redirect to dashboard
       router.push("/dashboard")
     } catch (error) {
-      console.error("Registration error:", error)
       alert("Registration failed. Please try again.")
     } finally {
       setIsLoading(false)
@@ -142,190 +168,176 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
-        <div className="flex items-center space-x-3">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <Link href="/" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Login
           </Link>
-          <h1 className="text-xl font-bold">Create Account</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
+          <p className="text-gray-600">Join FCB VIP Intern2Days and start earning</p>
         </div>
-      </div>
 
-      <div className="p-4">
-        <Card className="max-w-md mx-auto">
+        {/* Referral Alert */}
+        {hasReferralCode && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <Gift className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              🎉 You're registering with referral code: <strong>{referralCode}</strong>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-center">Join FCB VIP Intern2Days</CardTitle>
-            <p className="text-center text-gray-600 text-sm">Start earning daily with simple tasks</p>
+            <CardTitle className="text-center">Registration Form</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Referral Code Alert */}
-            {formData.referralCode && (
-              <Alert className="border-green-200 bg-green-50">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  Using referral code: <strong>{formData.referralCode}</strong>
-                </AlertDescription>
-              </Alert>
-            )}
+            {/* Full Name */}
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name *</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Enter your full name"
+                  className={`pl-10 ${errors.fullName ? "border-red-500" : ""}`}
+                  value={formData.fullName}
+                  onChange={(e) => handleInputChange("fullName", e.target.value)}
+                />
+              </div>
+              {errors.fullName && <p className="text-sm text-red-600">{errors.fullName}</p>}
+            </div>
 
             {/* Phone Number */}
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="0712345678 or +254712345678"
-                value={formData.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value)}
-                className={errors.phone ? "border-red-500" : ""}
-              />
-              {errors.phone && (
-                <p className="text-red-500 text-sm flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.phone}
-                </p>
-              )}
+              <Label htmlFor="phone">Phone Number *</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="0712345678 or +254712345678"
+                  className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                />
+              </div>
+              {errors.phone && <p className="text-sm text-red-600">{errors.phone}</p>}
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address *</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your.email@example.com"
+                  className={`pl-10 ${errors.email ? "border-red-500" : ""}`}
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                />
+              </div>
+              {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
             </div>
 
             {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password *</Label>
               <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter password (min 6 characters)"
+                  placeholder="Create a strong password"
+                  className={`pl-10 pr-10 ${errors.password ? "border-red-500" : ""}`}
                   value={formData.password}
                   onChange={(e) => handleInputChange("password", e.target.value)}
-                  className={errors.password ? "border-red-500" : ""}
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+                </button>
               </div>
-              {errors.password && (
-                <p className="text-red-500 text-sm flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.password}
-                </p>
-              )}
+              {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
             </div>
 
             {/* Confirm Password */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Confirm Password *</Label>
               <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm your password"
+                  className={`pl-10 pr-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
                   value={formData.confirmPassword}
                   onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                  className={errors.confirmPassword ? "border-red-500" : ""}
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+                </button>
               </div>
-              {errors.confirmPassword && (
-                <p className="text-red-500 text-sm flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.confirmPassword}
-                </p>
-              )}
-            </div>
-
-            {/* Fund Password */}
-            <div className="space-y-2">
-              <Label htmlFor="fundPassword">Fund Password</Label>
-              <div className="relative">
-                <Input
-                  id="fundPassword"
-                  type={showFundPassword ? "text" : "password"}
-                  placeholder="4-digit fund password"
-                  value={formData.fundPassword}
-                  onChange={(e) => handleInputChange("fundPassword", e.target.value)}
-                  className={errors.fundPassword ? "border-red-500" : ""}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowFundPassword(!showFundPassword)}
-                >
-                  {showFundPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-              {errors.fundPassword && (
-                <p className="text-red-500 text-sm flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.fundPassword}
-                </p>
-              )}
-              <p className="text-xs text-gray-600">Used for withdrawals and sensitive operations</p>
+              {errors.confirmPassword && <p className="text-sm text-red-600">{errors.confirmPassword}</p>}
             </div>
 
             {/* Referral Code */}
             <div className="space-y-2">
               <Label htmlFor="referralCode">Referral Code (Optional)</Label>
-              <Input
-                id="referralCode"
-                type="text"
-                placeholder="Enter referral code (e.g., FCB123456)"
-                value={formData.referralCode}
-                onChange={(e) => handleInputChange("referralCode", e.target.value.toUpperCase())}
-                className={errors.referralCode ? "border-red-500" : ""}
-              />
-              {errors.referralCode && (
-                <p className="text-red-500 text-sm flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.referralCode}
+              <div className="relative">
+                <Gift className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="referralCode"
+                  type="text"
+                  placeholder="Enter referral code if you have one"
+                  className="pl-10 font-mono"
+                  value={formData.referralCode}
+                  onChange={(e) => handleInputChange("referralCode", e.target.value.toUpperCase())}
+                />
+              </div>
+              {formData.referralCode && (
+                <p className="text-sm text-green-600 flex items-center">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Referral code applied
                 </p>
               )}
-              <p className="text-xs text-gray-600">Get bonus rewards when you use a friend's code</p>
             </div>
 
             {/* Terms and Conditions */}
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="terms"
-                checked={agreeToTerms}
-                onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
-              />
-              <Label htmlFor="terms" className="text-sm">
-                I agree to the{" "}
-                <Link href="/terms" className="text-blue-600 hover:underline">
-                  Terms and Conditions
-                </Link>{" "}
-                and{" "}
-                <Link href="/privacy" className="text-blue-600 hover:underline">
-                  Privacy Policy
-                </Link>
-              </Label>
+            <div className="space-y-2">
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="terms"
+                  checked={formData.agreeToTerms}
+                  onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked)}
+                  className={errors.agreeToTerms ? "border-red-500" : ""}
+                />
+                <Label htmlFor="terms" className="text-sm leading-5">
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-blue-600 hover:underline">
+                    Terms and Conditions
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className="text-blue-600 hover:underline">
+                    Privacy Policy
+                  </Link>
+                </Label>
+              </div>
+              {errors.agreeToTerms && <p className="text-sm text-red-600">{errors.agreeToTerms}</p>}
             </div>
-            {errors.terms && (
-              <p className="text-red-500 text-sm flex items-center">
-                <AlertCircle className="h-4 w-4 mr-1" />
-                {errors.terms}
-              </p>
-            )}
 
             {/* Register Button */}
             <Button
@@ -337,14 +349,28 @@ export default function RegisterPage() {
             </Button>
 
             {/* Login Link */}
-            <div className="text-center">
+            <div className="text-center pt-4">
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
                 <Link href="/" className="text-blue-600 hover:underline font-medium">
-                  Sign In
+                  Sign in here
                 </Link>
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Benefits */}
+        <Card className="mt-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-green-800 mb-2">Why Join FCB VIP Intern2Days?</h3>
+            <ul className="text-sm text-green-700 space-y-1">
+              <li>• Earn KES 70 for each completed task</li>
+              <li>• Get paid daily for your work</li>
+              <li>• Work from anywhere using your phone</li>
+              <li>• Refer friends and earn KES 150 per referral</li>
+              <li>• No experience required - start earning today!</li>
+            </ul>
           </CardContent>
         </Card>
       </div>

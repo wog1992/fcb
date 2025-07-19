@@ -1,188 +1,210 @@
-// Referral System Backend Logic
 export interface ReferralUser {
   phone: string
   referrerCode: string
   joinDate: string
-  userId: string
-  isActive: boolean
+  joinTime: string
+  isActive?: boolean
 }
 
-export interface ReferralStatus {
-  hasInvited: boolean
-  invitedUsers: ReferralUser[]
-  canClaim: boolean
+export interface ReferralStats {
+  totalReferrals: number
+  activeReferrals: number
   totalEarnings: number
+  pendingEarnings: number
 }
 
 export class ReferralSystem {
-  private static BONUS_PER_REFERRAL = 150 // KES 150 per successful referral
-  private static STORAGE_KEY_INVITED_USERS = "invitedUsers"
-  private static STORAGE_KEY_REFERRAL_STATUS = "referralStatus"
-  private static STORAGE_KEY_CLAIMED_BONUS = "hasClaimedReferralBonus"
+  private static readonly REFERRAL_BONUS = 150 // KES per referral
+  private static readonly STORAGE_KEY = "invitedUsers"
+  private static readonly EARNINGS_KEY = "referralEarnings"
+  private static readonly CLAIMED_KEY = "hasClaimedReferralBonus"
 
-  // Add a new referral when someone registers with a referral code
-  static addReferral(newUserPhone: string, referralCode: string, newUserId: string): void {
-    const invitedUsers = this.getInvitedUsers()
+  static addReferral(referrerCode: string, newUserPhone: string): boolean {
+    try {
+      const invitedUsers = this.getAllReferrals()
 
-    const newReferral: ReferralUser = {
-      phone: newUserPhone,
-      referrerCode: referralCode,
-      joinDate: new Date().toISOString().split("T")[0],
-      userId: newUserId,
-      isActive: true,
+      // Check if user already exists
+      const existingUser = invitedUsers.find((user) => user.phone === newUserPhone)
+      if (existingUser) {
+        return false // User already referred
+      }
+
+      const newReferral: ReferralUser = {
+        phone: newUserPhone,
+        referrerCode: referrerCode,
+        joinDate: new Date().toLocaleDateString(),
+        joinTime: new Date().toLocaleTimeString(),
+        isActive: true,
+      }
+
+      invitedUsers.push(newReferral)
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(invitedUsers))
+
+      return true
+    } catch (error) {
+      console.error("Error adding referral:", error)
+      return false
     }
-
-    invitedUsers.push(newReferral)
-    localStorage.setItem(this.STORAGE_KEY_INVITED_USERS, JSON.stringify(invitedUsers))
-
-    // Update referral status for the referrer
-    this.updateReferralStatus(referralCode)
   }
 
-  // Get all invited users
-  static getInvitedUsers(): ReferralUser[] {
-    const stored = localStorage.getItem(this.STORAGE_KEY_INVITED_USERS)
-    return stored ? JSON.parse(stored) : []
+  static getAllReferrals(): ReferralUser[] {
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY)
+      return stored ? JSON.parse(stored) : []
+    } catch (error) {
+      console.error("Error getting referrals:", error)
+      return []
+    }
   }
 
-  // Get referral status for a specific user
-  static getReferralStatus(userReferralCode: string): ReferralStatus {
-    const invitedUsers = this.getInvitedUsers()
-    const userReferrals = invitedUsers.filter((user) => user.referrerCode === userReferralCode)
-    const hasClaimedBonus = this.hasClaimedBonus()
+  static getReferralsByCode(referrerCode: string): ReferralUser[] {
+    const allReferrals = this.getAllReferrals()
+    return allReferrals.filter((user) => user.referrerCode === referrerCode)
+  }
+
+  static getReferralStats(referrerCode: string): ReferralStats {
+    const userReferrals = this.getReferralsByCode(referrerCode)
+    const activeReferrals = userReferrals.filter((user) => user.isActive !== false)
 
     return {
-      hasInvited: userReferrals.length > 0,
-      invitedUsers: userReferrals,
-      canClaim: userReferrals.length > 0 && !hasClaimedBonus,
-      totalEarnings: userReferrals.length * this.BONUS_PER_REFERRAL,
+      totalReferrals: userReferrals.length,
+      activeReferrals: activeReferrals.length,
+      totalEarnings: userReferrals.length * this.REFERRAL_BONUS,
+      pendingEarnings: this.hasClaimedBonus(referrerCode) ? 0 : userReferrals.length * this.REFERRAL_BONUS,
     }
   }
 
-  // Update referral status for a user
-  private static updateReferralStatus(referralCode: string): void {
-    const status = this.getReferralStatus(referralCode)
-    localStorage.setItem(this.STORAGE_KEY_REFERRAL_STATUS, JSON.stringify(status))
+  static canClaimBonus(referrerCode: string): boolean {
+    const referrals = this.getReferralsByCode(referrerCode)
+    const hasReferrals = referrals.length > 0
+    const hasNotClaimed = !this.hasClaimedBonus(referrerCode)
+
+    return hasReferrals && hasNotClaimed
   }
 
-  // Check if user has already claimed their referral bonus
-  static hasClaimedBonus(): boolean {
-    const claimed = localStorage.getItem(this.STORAGE_KEY_CLAIMED_BONUS)
-    return claimed ? JSON.parse(claimed) : false
-  }
-
-  // Claim referral bonus
-  static claimReferralBonus(
-    userReferralCode: string,
-    inputCode: string,
-  ): {
-    success: boolean
-    message: string
-    bonusAmount: number
-  } {
+  static claimBonus(referrerCode: string, inputCode: string): { success: boolean; amount: number; message: string } {
     // Validate referral code
-    if (inputCode !== userReferralCode) {
+    if (inputCode !== referrerCode) {
       return {
         success: false,
+        amount: 0,
         message: "Invalid referral code. Please enter your own referral code.",
-        bonusAmount: 0,
       }
     }
 
     // Check if already claimed
-    if (this.hasClaimedBonus()) {
+    if (this.hasClaimedBonus(referrerCode)) {
       return {
         success: false,
-        message: "Referral bonus has already been claimed",
-        bonusAmount: 0,
+        amount: 0,
+        message: "You have already claimed your referral bonus.",
       }
     }
 
-    // Check if user has valid referrals
-    const status = this.getReferralStatus(userReferralCode)
-    if (!status.hasInvited) {
+    // Check if has referrals
+    const referrals = this.getReferralsByCode(referrerCode)
+    if (referrals.length === 0) {
       return {
         success: false,
-        message: "No valid referrals found. Invite friends first!",
-        bonusAmount: 0,
+        amount: 0,
+        message: "You haven't invited anyone yet.",
       }
     }
 
     // Calculate and award bonus
-    const bonusAmount = status.totalEarnings
+    const bonusAmount = referrals.length * this.REFERRAL_BONUS
 
-    // Update user balances
-    const currentBalance = Number.parseFloat(localStorage.getItem("userBalance") || "0")
-    const currentReferralEarnings = Number.parseFloat(localStorage.getItem("referralEarnings") || "0")
-
-    const newBalance = currentBalance + bonusAmount
-    const newReferralEarnings = currentReferralEarnings + bonusAmount
-
-    localStorage.setItem("userBalance", newBalance.toString())
-    localStorage.setItem("referralEarnings", newReferralEarnings.toString())
-    localStorage.setItem(this.STORAGE_KEY_CLAIMED_BONUS, "true")
-
-    // Update referral status
-    const updatedStatus = { ...status, canClaim: false }
-    localStorage.setItem(this.STORAGE_KEY_REFERRAL_STATUS, JSON.stringify(updatedStatus))
-
-    return {
-      success: true,
-      message: `Successfully claimed KES ${bonusAmount} referral bonus! Added to your balance.`,
-      bonusAmount,
-    }
-  }
-
-  // Generate unique referral code
-  static generateReferralCode(): string {
-    return `FCB${Math.random().toString(36).substr(2, 6).toUpperCase()}`
-  }
-
-  // Validate referral code format
-  static isValidReferralCode(code: string): boolean {
-    return /^FCB[A-Z0-9]{6}$/.test(code)
-  }
-
-  // Get referral statistics for admin
-  static getReferralStats(): {
-    totalReferrals: number
-    activeReferrals: number
-    totalBonusesPaid: number
-    pendingClaims: number
-  } {
-    const allReferrals = this.getInvitedUsers()
-    const activeReferrals = allReferrals.filter((ref) => ref.isActive)
-
-    // This would normally come from a database
-    const totalBonusesPaid = Number.parseFloat(localStorage.getItem("totalReferralBonusesPaid") || "0")
-
-    // Count users who have referrals but haven't claimed bonus
-    const usersWithReferrals = new Set(allReferrals.map((ref) => ref.referrerCode))
-    const claimedBonuses = new Set() // This would track who has claimed
-    const pendingClaims = usersWithReferrals.size - claimedBonuses.size
-
-    return {
-      totalReferrals: allReferrals.length,
-      activeReferrals: activeReferrals.length,
-      totalBonusesPaid,
-      pendingClaims,
-    }
-  }
-
-  // Create shareable referral link
-  static createReferralLink(referralCode: string, baseUrl?: string): string {
-    const domain = baseUrl || (typeof window !== "undefined" ? window.location.origin : "https://fcbvip.com")
-    return `${domain}/register?ref=${referralCode}`
-  }
-
-  // Extract referral code from URL
-  static extractReferralFromUrl(url: string): string | null {
     try {
-      const urlObj = new URL(url)
-      const refCode = urlObj.searchParams.get("ref")
-      return refCode && this.isValidReferralCode(refCode) ? refCode : null
-    } catch {
-      return null
+      // Update user balance
+      const currentBalance = Number.parseFloat(localStorage.getItem("userBalance") || "0")
+      const newBalance = currentBalance + bonusAmount
+      localStorage.setItem("userBalance", newBalance.toString())
+
+      // Update referral earnings
+      const currentReferralEarnings = Number.parseFloat(localStorage.getItem(this.EARNINGS_KEY) || "0")
+      const newReferralEarnings = currentReferralEarnings + bonusAmount
+      localStorage.setItem(this.EARNINGS_KEY, newReferralEarnings.toString())
+
+      // Mark as claimed
+      localStorage.setItem(this.CLAIMED_KEY, "true")
+
+      return {
+        success: true,
+        amount: bonusAmount,
+        message: `Congratulations! You earned KES ${bonusAmount} from ${referrals.length} referral(s)!`,
+      }
+    } catch (error) {
+      console.error("Error claiming bonus:", error)
+      return {
+        success: false,
+        amount: 0,
+        message: "Error processing bonus claim. Please try again.",
+      }
     }
+  }
+
+  static hasClaimedBonus(referrerCode?: string): boolean {
+    try {
+      const claimed = localStorage.getItem(this.CLAIMED_KEY)
+      return claimed === "true"
+    } catch (error) {
+      console.error("Error checking claimed status:", error)
+      return false
+    }
+  }
+
+  static generateReferralLink(referrerCode: string, baseUrl?: string): string {
+    const domain = baseUrl || (typeof window !== "undefined" ? window.location.origin : "")
+    return `${domain}/register?ref=${referrerCode}`
+  }
+
+  static validateReferralCode(code: string): boolean {
+    // Basic validation for FCB referral codes
+    const codeRegex = /^FCB[A-Z0-9]{6}$/
+    return codeRegex.test(code)
+  }
+
+  static getReferralEarnings(): number {
+    try {
+      const earnings = localStorage.getItem(this.EARNINGS_KEY)
+      return earnings ? Number.parseFloat(earnings) : 0
+    } catch (error) {
+      console.error("Error getting referral earnings:", error)
+      return 0
+    }
+  }
+
+  static resetReferralData(): void {
+    try {
+      localStorage.removeItem(this.STORAGE_KEY)
+      localStorage.removeItem(this.EARNINGS_KEY)
+      localStorage.removeItem(this.CLAIMED_KEY)
+    } catch (error) {
+      console.error("Error resetting referral data:", error)
+    }
+  }
+
+  // Admin functions
+  static getAllReferralStats(): { [key: string]: ReferralStats } {
+    const allReferrals = this.getAllReferrals()
+    const stats: { [key: string]: ReferralStats } = {}
+
+    // Group by referrer code
+    const referrerCodes = [...new Set(allReferrals.map((r) => r.referrerCode))]
+
+    referrerCodes.forEach((code) => {
+      stats[code] = this.getReferralStats(code)
+    })
+
+    return stats
+  }
+
+  static getTotalSystemReferrals(): number {
+    return this.getAllReferrals().length
+  }
+
+  static getTotalSystemEarnings(): number {
+    const allReferrals = this.getAllReferrals()
+    return allReferrals.length * this.REFERRAL_BONUS
   }
 }
