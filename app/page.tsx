@@ -28,7 +28,7 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">IPG</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">FCB</h1>
           <p className="text-blue-100">FCB VIP Intern2Days</p>
         </div>
 
