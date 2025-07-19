@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Home, FileText, Trophy, TrendingUp, User, Play, Clock, CheckCircle } from "lucide-react"
+import { Home, FileText, Trophy, TrendingUp, User, Play, Clock, CheckCircle, Lock } from "lucide-react"
 import Link from "next/link"
 
 export default function TasksPage() {
@@ -49,7 +49,8 @@ export default function TasksPage() {
       description: "Review pen product",
       level: "Intern",
       dailyEarning: "KES 60 per 2 days",
-      duration: 3000, // 3 seconds for demo
+      duration: 3000,
+      requiredBalance: 0, // Free for intern level
     },
     {
       id: 2,
@@ -61,8 +62,9 @@ export default function TasksPage() {
       status: "available",
       description: "Apple Watch review",
       level: "J1",
-      dailyEarning: "KES 70 per day for 365 days",
+      dailyEarning: "KES 70 per task",
       duration: 4000,
+      requiredBalance: 2100, // Requires J1 investment
     },
     {
       id: 3,
@@ -76,6 +78,7 @@ export default function TasksPage() {
       level: "J2",
       dailyEarning: "KES 180 per day for 365 days",
       duration: 5000,
+      requiredBalance: 5400, // Requires J2 investment
     },
     {
       id: 4,
@@ -89,6 +92,7 @@ export default function TasksPage() {
       level: "J3",
       dailyEarning: "KES 350 per day for 365 days",
       duration: 6000,
+      requiredBalance: 10500, // Requires J3 investment
     },
     {
       id: 5,
@@ -102,6 +106,7 @@ export default function TasksPage() {
       level: "J4",
       dailyEarning: "KES 600 per day for 365 days",
       duration: 7000,
+      requiredBalance: 18000, // Requires J4 investment
     },
     {
       id: 6,
@@ -115,6 +120,7 @@ export default function TasksPage() {
       level: "J5",
       dailyEarning: "KES 1300 per day for 365 days",
       duration: 8000,
+      requiredBalance: 39000, // Requires J5 investment
     },
     {
       id: 7,
@@ -128,12 +134,21 @@ export default function TasksPage() {
       level: "J6",
       dailyEarning: "KES 3200 per day for 365 days",
       duration: 10000,
+      requiredBalance: 96000, // Requires J6 investment
     },
   ]
 
   const handleStartTask = (taskId: number) => {
     const task = taskItems.find((t) => t.id === taskId)
     if (!task || completedTasks.includes(taskId) || taskInProgress === taskId) return
+
+    // Check if user has sufficient balance for this task
+    if (userBalance < task.requiredBalance) {
+      alert(
+        `Insufficient balance! You need KES ${task.requiredBalance} to unlock this task. Please invest in ${task.category} package first.`,
+      )
+      return
+    }
 
     setTaskInProgress(taskId)
 
@@ -146,6 +161,10 @@ export default function TasksPage() {
       // Show success message
       alert(`Task completed! You earned KES ${task.reward}`)
     }, task.duration)
+  }
+
+  const isTaskLocked = (task: any) => {
+    return userBalance < task.requiredBalance
   }
 
   const getTaskButtonContent = (task: any) => {
@@ -167,6 +186,15 @@ export default function TasksPage() {
       )
     }
 
+    if (isTaskLocked(task)) {
+      return (
+        <>
+          <Lock className="h-3 w-3 mr-1" />
+          Locked
+        </>
+      )
+    }
+
     return (
       <>
         <Play className="h-3 w-3 mr-1" />
@@ -182,6 +210,10 @@ export default function TasksPage() {
 
     if (taskInProgress === task.id) {
       return "bg-yellow-500 hover:bg-yellow-600 text-white"
+    }
+
+    if (isTaskLocked(task)) {
+      return "bg-gray-400 text-white cursor-not-allowed"
     }
 
     return "bg-orange-500 hover:bg-orange-600 text-white"
@@ -290,15 +322,20 @@ export default function TasksPage() {
             {/* Task Grid */}
             <div className="grid grid-cols-1 gap-4 mb-6">
               {taskItems.map((task) => (
-                <Card key={task.id} className="relative overflow-hidden">
+                <Card key={task.id} className={`relative overflow-hidden ${isTaskLocked(task) ? "opacity-60" : ""}`}>
                   <CardContent className="p-0">
                     <div className="flex">
-                      <div className="w-24 h-24 flex-shrink-0">
+                      <div className="w-24 h-24 flex-shrink-0 relative">
                         <img
                           src={task.image || "/placeholder.svg"}
                           alt={task.title}
                           className="w-full h-full object-cover rounded-l-lg"
                         />
+                        {isTaskLocked(task) && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-l-lg">
+                            <Lock className="h-6 w-6 text-white" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 p-3">
                         <div className="flex items-center justify-between mb-2">
@@ -308,11 +345,18 @@ export default function TasksPage() {
                         <div className="font-medium mb-1">{task.title}</div>
                         <div className="text-sm text-gray-600 mb-2">{task.description}</div>
                         <div className="text-xs text-blue-600 mb-2">{task.dailyEarning}</div>
+                        {isTaskLocked(task) && (
+                          <div className="text-xs text-red-500 mb-2">
+                            Requires KES {task.requiredBalance} investment
+                          </div>
+                        )}
                         <Button
                           size="sm"
                           className={getTaskButtonClass(task)}
                           onClick={() => handleStartTask(task.id)}
-                          disabled={completedTasks.includes(task.id) || taskInProgress === task.id}
+                          disabled={
+                            completedTasks.includes(task.id) || taskInProgress === task.id || isTaskLocked(task)
+                          }
                         >
                           {getTaskButtonContent(task)}
                         </Button>

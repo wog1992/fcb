@@ -2,127 +2,213 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, RefreshCw } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function RegisterPage() {
+  const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
     phone: "",
     password: "",
     confirmPassword: "",
     verificationCode: "",
-    referralCode: "4426140",
+    referralCode: "FCB2025",
   })
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(false)
 
-  const generateVerificationCode = () => {
-    return Math.floor(1000 + Math.random() * 9000).toString()
+  // Generate a random verification code for demo
+  const generatedCode = "8756"
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }))
+    }
   }
 
-  const [verificationCode] = useState(generateVerificationCode())
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required"
+    } else if (formData.phone.length < 10) {
+      newErrors.phone = "Please enter a valid phone number"
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required"
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters"
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password"
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match"
+    }
+
+    if (!formData.verificationCode) {
+      newErrors.verificationCode = "Verification code is required"
+    } else if (formData.verificationCode !== generatedCode) {
+      newErrors.verificationCode = "Invalid verification code"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleRegister = async () => {
+    if (!validateForm()) return
+
+    setIsLoading(true)
+
+    // Simulate API call
+    setTimeout(() => {
+      setIsLoading(false)
+      alert("Registration successful! Welcome to FCB VIP Intern2Days!")
+      router.push("/dashboard")
+    }, 1500)
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="flex items-center mb-6">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-purple-800 text-white p-4">
+        <div className="flex items-center">
+          <Link href="/" className="mr-4">
+            <ArrowLeft className="h-6 w-6" />
           </Link>
-          <span className="text-white ml-4">Choose language</span>
         </div>
+      </div>
 
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">IPG</h1>
-        </div>
+      {/* Logo Section */}
+      <div className="bg-white p-6 text-center border-b">
+        <div className="text-3xl font-bold text-blue-600 mb-2">FCB</div>
+        <div className="text-sm text-gray-600">FCB VIP Intern2Days</div>
+      </div>
 
-        <Card className="backdrop-blur-sm bg-white/95">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl">Register</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reg-phone">Phone Number</Label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-                  +254
-                </span>
+      {/* Registration Form */}
+      <div className="p-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {/* Phone Number */}
+              <div>
+                <Label htmlFor="phone">Phone Number *</Label>
                 <Input
-                  id="reg-phone"
-                  placeholder="Please enter your phone number"
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="rounded-l-none"
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                  className={errors.phone ? "border-red-500" : ""}
                 />
+                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="reg-password">Password</Label>
-              <Input
-                id="reg-password"
-                type="password"
-                placeholder="Please enter the login password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm Password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                placeholder="Please confirm your password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="verification">Verification Code</Label>
-              <div className="flex space-x-2">
-                <Input
-                  id="verification"
-                  placeholder="Please enter the verification code"
-                  value={formData.verificationCode}
-                  onChange={(e) => setFormData({ ...formData, verificationCode: e.target.value })}
-                  className="flex-1"
-                />
-                <div className="flex items-center space-x-1 px-3 py-2 bg-gray-100 rounded border text-sm">
-                  <span>{verificationCode}</span>
-                  <RefreshCw className="h-4 w-4 text-gray-500" />
+              {/* Password */}
+              <div>
+                <Label htmlFor="password">Password *</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    className={errors.password ? "border-red-500" : ""}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
                 </div>
+                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="referral">Referral Code</Label>
-              <Input
-                id="referral"
-                value={formData.referralCode}
-                onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
-                className="bg-gray-50"
-              />
-            </div>
+              {/* Confirm Password */}
+              <div>
+                <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                    className={errors.confirmPassword ? "border-red-500" : ""}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+              </div>
 
-            <Button className="w-full bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600">
-              Register now
-            </Button>
+              {/* Verification Code */}
+              <div>
+                <Label htmlFor="verificationCode">Verification Code *</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    id="verificationCode"
+                    type="text"
+                    placeholder="Enter verification code"
+                    value={formData.verificationCode}
+                    onChange={(e) => handleInputChange("verificationCode", e.target.value)}
+                    className={`flex-1 ${errors.verificationCode ? "border-red-500" : ""}`}
+                  />
+                  <div className="bg-gray-100 px-4 py-2 rounded border text-center font-mono">{generatedCode}</div>
+                </div>
+                {errors.verificationCode && <p className="text-red-500 text-sm mt-1">{errors.verificationCode}</p>}
+              </div>
 
-            <Button variant="outline" className="w-full bg-transparent" asChild>
-              <Link href="/">Have an account, download now</Link>
-            </Button>
+              {/* Referral Code */}
+              <div>
+                <Label htmlFor="referralCode">Referral Code (Optional)</Label>
+                <Input
+                  id="referralCode"
+                  type="text"
+                  placeholder="Enter referral code"
+                  value={formData.referralCode}
+                  onChange={(e) => handleInputChange("referralCode", e.target.value)}
+                />
+              </div>
 
-            <div className="text-center">
-              <Link href="/" className="text-sm text-blue-600 hover:underline">
-                Back to login
-              </Link>
+              {/* Register Button */}
+              <Button
+                onClick={handleRegister}
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+              >
+                {isLoading ? "Registering..." : "Register now"}
+              </Button>
+
+              {/* Login Link */}
+              <div className="text-center">
+                <span className="text-gray-600">Already have an account? </span>
+                <Link href="/" className="text-blue-600 hover:underline">
+                  Login here
+                </Link>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -20,10 +20,10 @@ export default function VIPPage() {
     {
       id: "j1",
       name: "J 1",
-      deposit: "KES100",
-      dailyEarning: "KES10.00/Per order",
+      deposit: "KES2100",
+      dailyEarning: "KES70.00/Per task",
       dailyWork: "Daily work 4 times",
-      totalDeposit: "deposit KES1200",
+      totalDeposit: "deposit KES2100",
       bgColor: "bg-gradient-to-r from-orange-500 to-red-500",
     },
     {
@@ -129,10 +129,10 @@ export default function VIPPage() {
                 <tbody>
                   <tr className="border-b">
                     <td className="p-2 font-semibold">J1</td>
-                    <td className="p-2">KES 100</td>
-                    <td className="p-2 text-green-600">KES 60</td>
-                    <td className="p-2 text-green-600">KES 1,800</td>
-                    <td className="p-2 text-green-600">KES 21,900</td>
+                    <td className="p-2">KES 2,100</td>
+                    <td className="p-2 text-green-600">KES 280</td>
+                    <td className="p-2 text-green-600">KES 8,400</td>
+                    <td className="p-2 text-green-600">KES 102,200</td>
                   </tr>
                   <tr className="border-b">
                     <td className="p-2 font-semibold">J2</td>

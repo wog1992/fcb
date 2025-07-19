@@ -2,14 +2,15 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { FloatingCustomerCare } from "@/components/floating-customer-care"
+import { ThemeProvider } from "@/components/theme-provider"
+import FloatingCustomerCare from "@/components/floating-customer-care"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "FCB VIP Intern2Days",
-  description: "Investment and affiliate marketing platform",
-  generator: "v0.dev",
+  description: "Investment and task management platform",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -18,10 +19,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        {children}
-        <FloatingCustomerCare />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          {children}
+          <FloatingCustomerCare />
+        </ThemeProvider>
       </body>
     </html>
   )
