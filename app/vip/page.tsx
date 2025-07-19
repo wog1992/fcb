@@ -1,179 +1,206 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Home, FileText, Trophy, TrendingUp, User } from "lucide-react"
+import { ArrowLeft, Home, FileText, Trophy, TrendingUp, User, Crown, Star, Gift } from "lucide-react"
 import Link from "next/link"
 
 export default function VIPPage() {
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null)
+
   const packages = [
     {
       id: "intern",
       name: "Intern",
-      subtitle: "My identity",
-      dailyWork: "Daily work 2 times",
-      effectiveDate: "2025-07-18~2025-07-20",
-      bgColor: "bg-gradient-to-r from-gray-800 to-gray-900",
-      current: true,
+      deposit: "Free",
+      dailyEarning: "KES60.00/Per 2 days",
+      totalDeposit: "Free Registration",
+      color: "bg-gray-500",
+      features: ["Basic tasks", "2-day earning cycle", "Limited rewards"],
     },
     {
       id: "j1",
-      name: "J 1",
+      name: "J1",
       deposit: "KES2100",
       dailyEarning: "KES70.00/Per task",
-      dailyWork: "Daily work 4 times",
       totalDeposit: "deposit KES2100",
-      bgColor: "bg-gradient-to-r from-orange-500 to-red-500",
+      color: "bg-blue-500",
+      features: ["Daily tasks", "Higher rewards", "Priority support"],
     },
     {
       id: "j2",
-      name: "J 2",
+      name: "J2",
       deposit: "KES5400",
-      dailyEarning: "KES28.00/Per order",
-      dailyWork: "Daily work 6 times",
-      totalDeposit: "deposit KES5100",
-      bgColor: "bg-gradient-to-r from-teal-400 to-green-500",
+      dailyEarning: "KES180.00/Per day",
+      totalDeposit: "deposit KES5400",
+      color: "bg-green-500",
+      features: ["Premium tasks", "Daily earnings", "VIP support"],
     },
     {
       id: "j3",
-      name: "J 3",
+      name: "J3",
       deposit: "KES10500",
-      dailyEarning: "KES67.00/Per order",
-      dailyWork: "Daily work 8 times",
-      totalDeposit: "deposit KES16000",
-      bgColor: "bg-gradient-to-r from-yellow-400 to-orange-500",
+      dailyEarning: "KES350.00/Per day",
+      totalDeposit: "deposit KES10500",
+      color: "bg-yellow-500",
+      features: ["Elite tasks", "High daily earnings", "Exclusive rewards"],
     },
+    {
+      id: "j4",
+      name: "J4",
+      deposit: "KES18000",
+      dailyEarning: "KES600.00/Per day",
+      totalDeposit: "deposit KES18000",
+      color: "bg-orange-500",
+      features: ["Premium elite tasks", "Maximum earnings", "Personal manager"],
+    },
+    {
+      id: "j5",
+      name: "J5",
+      deposit: "KES39000",
+      dailyEarning: "KES1300.00/Per day",
+      totalDeposit: "deposit KES39000",
+      color: "bg-red-500",
+      features: ["Luxury tasks", "Top tier earnings", "VIP treatment"],
+    },
+    {
+      id: "j6",
+      name: "J6",
+      deposit: "KES96000",
+      dailyEarning: "KES3200.00/Per day",
+      totalDeposit: "deposit KES96000",
+      color: "bg-purple-500",
+      features: ["Ultimate tasks", "Maximum profits", "Elite status"],
+    },
+  ]
+
+  const profitData = [
+    { level: "J1", daily: "KES280", monthly: "KES8,400", yearly: "KES102,200" },
+    { level: "J2", daily: "KES180", monthly: "KES5,400", yearly: "KES65,700" },
+    { level: "J3", daily: "KES350", monthly: "KES10,500", yearly: "KES127,750" },
+    { level: "J4", daily: "KES600", monthly: "KES18,000", yearly: "KES219,000" },
+    { level: "J5", daily: "KES1,300", monthly: "KES39,000", yearly: "KES474,500" },
+    { level: "J6", daily: "KES3,200", monthly: "KES96,000", yearly: "KES1,168,000" },
   ]
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-purple-800 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative z-10 p-4 text-center">
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 mx-auto max-w-sm">
-            <div className="text-sm opacity-90 mb-2">CREATING THE NEXT CENTURY</div>
-            <div className="text-lg font-bold">EXECUTIVE</div>
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <h1 className="text-xl font-bold">VIP Packages</h1>
           </div>
+          <Crown className="h-6 w-6" />
         </div>
       </div>
 
-      {/* VIP Packages */}
-      <div className="p-4 space-y-4">
-        {packages.map((pkg) => (
-          <Card key={pkg.id} className={`${pkg.bgColor} text-white overflow-hidden relative`}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <h3 className="text-xl font-bold">{pkg.name}</h3>
-                    {pkg.current && (
-                      <Badge variant="secondary" className="bg-white/20 text-white">
-                        Current
-                      </Badge>
-                    )}
-                  </div>
+      <div className="p-4 space-y-6">
+        {/* VIP Intro */}
+        <Card className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+          <CardContent className="p-6 text-center">
+            <Star className="h-12 w-12 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Become a VIP Member</h2>
+            <p className="text-sm opacity-90">
+              Unlock premium tasks and maximize your earning potential with our VIP packages
+            </p>
+          </CardContent>
+        </Card>
 
-                  {pkg.subtitle && <p className="text-sm opacity-90 mb-1">{pkg.subtitle}</p>}
-
-                  {pkg.dailyEarning && <p className="text-sm opacity-90 mb-1">{pkg.dailyEarning}</p>}
-
-                  <p className="text-sm opacity-90 mb-1">{pkg.dailyWork}</p>
-
-                  {pkg.totalDeposit && <p className="text-sm opacity-90">{pkg.totalDeposit}</p>}
-
-                  {pkg.effectiveDate && (
-                    <div className="mt-2">
-                      <p className="text-xs opacity-75">Effective date</p>
-                      <p className="text-sm">{pkg.effectiveDate}</p>
+        {/* Package Selection */}
+        <div>
+          <h3 className="text-lg font-bold mb-4">Select Investment Package</h3>
+          <div className="grid grid-cols-1 gap-4">
+            {packages.map((pkg) => (
+              <Card
+                key={pkg.id}
+                className={`cursor-pointer transition-all ${
+                  selectedPackage === pkg.id ? "ring-2 ring-blue-500 shadow-lg" : ""
+                }`}
+                onClick={() => setSelectedPackage(pkg.id)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <Badge className={`${pkg.color} text-white`}>{pkg.name}</Badge>
+                      <div>
+                        <div className="font-bold">{pkg.deposit}</div>
+                        <div className="text-sm text-gray-600">{pkg.dailyEarning}</div>
+                      </div>
                     </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col items-end space-y-2">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                      <Trophy className="h-4 w-4 text-white" />
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600">Total</div>
+                      <div className="font-bold text-blue-600">{pkg.totalDeposit}</div>
                     </div>
                   </div>
+                  <div className="flex flex-wrap gap-2">
+                    {pkg.features.map((feature, index) => (
+                      <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
 
-                  {!pkg.current && (
-                    <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white border-white/30" asChild>
-                      <Link href={`/invest/${pkg.id}`}>Join now</Link>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Profit Table Section */}
-      <div className="p-4 mt-8">
+        {/* Profit Table */}
         <Card>
-          <CardContent className="p-4">
-            <h3 className="text-lg font-bold mb-4 text-center">Investment Packages</h3>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Gift className="h-5 w-5 mr-2" />
+              Profit Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2">Plan</th>
-                    <th className="text-left p-2">Deposit</th>
+                    <th className="text-left p-2">Level</th>
                     <th className="text-left p-2">Daily</th>
                     <th className="text-left p-2">Monthly</th>
                     <th className="text-left p-2">Yearly</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b">
-                    <td className="p-2 font-semibold">J1</td>
-                    <td className="p-2">KES 2,100</td>
-                    <td className="p-2 text-green-600">KES 280</td>
-                    <td className="p-2 text-green-600">KES 8,400</td>
-                    <td className="p-2 text-green-600">KES 102,200</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-2 font-semibold">J2</td>
-                    <td className="p-2">KES 5,400</td>
-                    <td className="p-2 text-green-600">KES 180</td>
-                    <td className="p-2 text-green-600">KES 5,400</td>
-                    <td className="p-2 text-green-600">KES 65,700</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-2 font-semibold">J3</td>
-                    <td className="p-2">KES 10,500</td>
-                    <td className="p-2 text-green-600">KES 350</td>
-                    <td className="p-2 text-green-600">KES 10,500</td>
-                    <td className="p-2 text-green-600">KES 127,750</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-2 font-semibold">J4</td>
-                    <td className="p-2">KES 18,000</td>
-                    <td className="p-2 text-green-600">KES 600</td>
-                    <td className="p-2 text-green-600">KES 18,000</td>
-                    <td className="p-2 text-green-600">KES 219,000</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-2 font-semibold">J5</td>
-                    <td className="p-2">KES 39,000</td>
-                    <td className="p-2 text-green-600">KES 1,300</td>
-                    <td className="p-2 text-green-600">KES 39,000</td>
-                    <td className="p-2 text-green-600">KES 474,500</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2 font-semibold">J6</td>
-                    <td className="p-2">KES 96,000</td>
-                    <td className="p-2 text-green-600">KES 3,200</td>
-                    <td className="p-2 text-green-600">KES 96,000</td>
-                    <td className="p-2 text-green-600">KES 1,168,000</td>
-                  </tr>
+                  {profitData.map((row, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="p-2 font-medium">{row.level}</td>
+                      <td className="p-2 text-green-600">{row.daily}</td>
+                      <td className="p-2 text-blue-600">{row.monthly}</td>
+                      <td className="p-2 text-purple-600">{row.yearly}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </CardContent>
         </Card>
+
+        {/* Investment Button */}
+        {selectedPackage && (
+          <Card className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
+            <CardContent className="p-6 text-center">
+              <h3 className="text-xl font-bold mb-2">Ready to Invest?</h3>
+              <p className="text-sm opacity-90 mb-4">
+                Selected: {packages.find((p) => p.id === selectedPackage)?.name} Package
+              </p>
+              <Link href="/recharge">
+                <Button className="bg-white text-blue-600 hover:bg-gray-100">Proceed to Payment</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Bottom Navigation */}

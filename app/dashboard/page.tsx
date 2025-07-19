@@ -32,8 +32,15 @@ export default function DashboardPage() {
   // Load balance from localStorage on component mount
   useEffect(() => {
     const savedBalance = localStorage.getItem("userBalance")
+    const savedPhone = localStorage.getItem("userPhone")
+
     if (savedBalance) {
       setUser((prev) => ({ ...prev, balance: Number.parseFloat(savedBalance) }))
+    }
+    if (savedPhone) {
+      // Mask the phone number for display
+      const maskedPhone = `****${savedPhone.slice(-4)}`
+      setUser((prev) => ({ ...prev, phone: maskedPhone }))
     }
   }, [])
 
