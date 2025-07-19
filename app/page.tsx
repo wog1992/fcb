@@ -1,167 +1,136 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Eye, EyeOff, User, Lock } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Eye, EyeOff, Shield, Users } from "lucide-react"
+import Link from "next/link"
 
-export default function LoginPage() {
+export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const [loginData, setLoginData] = useState({ username: "", password: "" })
+  const [loginData, setLoginData] = useState({
+    phone: "",
+    password: "",
+  })
   const [registerData, setRegisterData] = useState({
-    username: "",
+    phone: "",
     password: "",
     confirmPassword: "",
-    phone: "",
-    inviteCode: "",
+    verificationCode: "",
+    referralCode: "",
   })
-  const router = useRouter()
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Simple validation - in real app, this would be proper authentication
-    if (loginData.username && loginData.password) {
-      if (loginData.username === "admin" && loginData.password === "admin") {
-        router.push("/admin")
-      } else {
-        router.push("/dashboard")
-      }
-    }
-  }
-
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (registerData.password !== registerData.confirmPassword) {
-      alert("Passwords do not match!")
-      return
-    }
-    // In real app, this would create account and redirect
-    router.push("/dashboard")
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo Section */}
+        {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4 shadow-lg">
-            <span className="text-2xl font-bold text-blue-600">FCB</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-2">FCB VIP Intern2Days</h1>
-          <p className="text-blue-100">Investment & Affiliate Platform</p>
+          <h1 className="text-4xl font-bold text-white mb-2">FCB</h1>
+          <p className="text-blue-100">FCB VIP Intern2Days</p>
         </div>
 
-        <Card className="shadow-2xl border-0">
-          <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl text-center">Welcome</CardTitle>
-            <CardDescription className="text-center">Sign in to your account or create a new one</CardDescription>
+        <Card className="backdrop-blur-sm bg-white/95">
+          <CardHeader>
+            <CardTitle className="text-center text-2xl">Welcome</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
+                <TabsTrigger value="login">User Login</TabsTrigger>
+                <TabsTrigger value="admin">Admin Login</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login" className="space-y-4 mt-4">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        type="text"
-                        placeholder="Username"
-                        className="pl-10"
-                        value={loginData.username}
-                        onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
-                        required
-                      />
-                    </div>
+              <TabsContent value="login" className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                      +254
+                    </span>
+                    <Input
+                      id="phone"
+                      placeholder="Enter your phone number"
+                      value={loginData.phone}
+                      onChange={(e) => setLoginData({ ...loginData, phone: e.target.value })}
+                      className="rounded-l-none"
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Password"
-                        className="pl-10 pr-10"
-                        value={loginData.password}
-                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                        required
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  >
-                    Sign In
+                </div>
+
+                <Link href="/dashboard">
+                  <Button className="w-full bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600">
+                    Login
                   </Button>
-                </form>
-                <div className="text-center text-sm text-gray-500">
-                  Demo: Use any username/password or admin/admin for admin panel
+                </Link>
+
+                <div className="text-center">
+                  <Button variant="outline" className="w-full bg-transparent" asChild>
+                    <Link href="/register">Register New Account</Link>
+                  </Button>
                 </div>
               </TabsContent>
 
-              <TabsContent value="register" className="space-y-4 mt-4">
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <Input
-                    type="text"
-                    placeholder="Username"
-                    value={registerData.username}
-                    onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
-                    required
-                  />
-                  <Input
-                    type="tel"
-                    placeholder="Phone Number"
-                    value={registerData.phone}
-                    onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                    required
-                  />
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={registerData.password}
-                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                    required
-                  />
-                  <Input
-                    type="password"
-                    placeholder="Confirm Password"
-                    value={registerData.confirmPassword}
-                    onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                    required
-                  />
-                  <Input
-                    type="text"
-                    placeholder="Invite Code (Optional)"
-                    value={registerData.inviteCode}
-                    onChange={(e) => setRegisterData({ ...registerData, inviteCode: e.target.value })}
-                  />
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                  >
-                    Create Account
-                  </Button>
-                </form>
+              <TabsContent value="admin" className="space-y-4">
+                <div className="flex items-center justify-center p-4 bg-red-50 rounded-lg">
+                  <Shield className="h-5 w-5 text-red-500 mr-2" />
+                  <span className="text-red-700 text-sm">Admin Access Only</span>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="admin-phone">Admin Phone</Label>
+                  <Input id="admin-phone" placeholder="0782192086" disabled className="bg-gray-50" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="admin-password">Admin Password</Label>
+                  <Input id="admin-password" type="password" placeholder="Enter admin password" />
+                </div>
+
+                <Link href="/admin">
+                  <Button className="w-full bg-red-600 hover:bg-red-700">Admin Login</Button>
+                </Link>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Customer Care */}
+        <div className="mt-6 text-center">
+          <a
+            href="https://t.me/Carefbc"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center text-white hover:text-blue-200 transition-colors"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Customer Care Support
+          </a>
+        </div>
       </div>
     </div>
   )
