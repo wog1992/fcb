@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,33 +23,34 @@ import {
   ArrowLeft,
   Smartphone,
   Building2,
-  CreditCard,
+  AlertTriangle,
   CheckCircle,
   Clock,
-  AlertTriangle,
-  Calendar,
+  Home,
+  FileText,
+  Trophy,
+  TrendingUp,
+  User,
+  ArrowUpRight,
+  ArrowDownLeft,
   Info,
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function WithdrawPage() {
+  const router = useRouter()
   const [userBalance, setUserBalance] = useState(0)
   const [withdrawAmount, setWithdrawAmount] = useState("")
-  const [withdrawMethod, setWithdrawMethod] = useState("mpesa")
-  const [phoneNumber, setPhoneNumber] = useState("")
+  const [withdrawMethod, setWithdrawMethod] = useState("")
+  const [accountDetails, setAccountDetails] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [withdrawalHistory, setWithdrawalHistory] = useState([])
-  const [canWithdraw, setCanWithdraw] = useState(false)
-  const [nextWithdrawDate, setNextWithdrawDate] = useState("")
 
-  const minWithdraw = 120 // Updated minimum withdrawal limit
-  const processingFee = 0.1 // 10% processing fee
-
+  // Load user balance and withdrawal history
   useEffect(() => {
-    // Load user data
     const savedBalance = localStorage.getItem("userBalance")
     const savedHistory = localStorage.getItem("withdrawalHistory")
-    const savedPhone = localStorage.getItem("userPhone")
 
     if (savedBalance) {
       setUserBalance(Number.parseFloat(savedBalance))
@@ -57,33 +58,12 @@ export default function WithdrawPage() {
     if (savedHistory) {
       setWithdrawalHistory(JSON.parse(savedHistory))
     }
-    if (savedPhone) {
-      setPhoneNumber(savedPhone)
-    }
-
-    // Check if today is Wednesday (3) or Saturday (6)
-    const today = new Date()
-    const dayOfWeek = today.getDay()
-    const isWithdrawDay = dayOfWeek === 3 || dayOfWeek === 6 // Wednesday or Saturday
-
-    setCanWithdraw(isWithdrawDay)
-
-    // Calculate next withdrawal date
-    if (!isWithdrawDay) {
-      const daysUntilNext = dayOfWeek < 3 ? 3 - dayOfWeek : dayOfWeek < 6 ? 6 - dayOfWeek : 7 - dayOfWeek + 3
-      const nextDate = new Date(today)
-      nextDate.setDate(today.getDate() + daysUntilNext)
-      setNextWithdrawDate(nextDate.toLocaleDateString())
-    }
   }, [])
 
-  const calculateFee = (amount) => {
-    return amount * processingFee
-  }
-
-  const calculateNetAmount = (amount) => {
-    return amount - calculateFee(amount)
-  }
+  const processingFee = withdrawAmount ? Number.parseFloat(withdrawAmount) * 0.1 : 0
+  const netAmount = withdrawAmount ? Number.parseFloat(withdrawAmount) - processingFee : 0
+  const minWithdraw = 100
+  const maxWithdraw = Math.min(userBalance, 5000)
 
   const handleWithdraw = () => {
     const amount = Number.parseFloat(withdrawAmount)
@@ -98,37 +78,32 @@ export default function WithdrawPage() {
       return
     }
 
-    if (!canWithdraw) {
-      alert("Withdrawals are only available on Wednesdays and Saturdays")
+    if (!withdrawMethod || !accountDetails) {
+      alert("Please fill in all withdrawal details")
       return
     }
 
     setIsProcessing(true)
 
-    // Simulate processing
+    // Simulate processing delay
     setTimeout(() => {
-      const fee = calculateFee(amount)
-      const netAmount = calculateNetAmount(amount)
-
+      const newBalance = userBalance - amount
       const newWithdrawal = {
         id: Date.now(),
         amount: amount,
-        fee: fee,
+        fee: processingFee,
         netAmount: netAmount,
         method: withdrawMethod,
-        phone: phoneNumber,
+        account: accountDetails,
         status: "Pending",
         date: new Date().toLocaleDateString(),
         time: new Date().toLocaleTimeString(),
       }
 
-      // Update history
+      // Update balance and history
+      setUserBalance(newBalance)
       const updatedHistory = [newWithdrawal, ...withdrawalHistory]
       setWithdrawalHistory(updatedHistory)
-
-      // Update balance (deduct gross amount)
-      const newBalance = userBalance - amount
-      setUserBalance(newBalance)
 
       // Save to localStorage
       localStorage.setItem("userBalance", newBalance.toString())
@@ -136,6 +111,8 @@ export default function WithdrawPage() {
 
       // Reset form
       setWithdrawAmount("")
+      setWithdrawMethod("")
+      setAccountDetails("")
       setIsProcessing(false)
 
       alert(`Withdrawal request submitted! You will receive KES ${netAmount.toFixed(2)} after processing.`)
@@ -164,18 +141,14 @@ export default function WithdrawPage() {
       case "Failed":
         return <AlertTriangle className="h-4 w-4" />
       default:
-        return <Clock className="h-4 w-4" />
+        return <Info className="h-4 w-4" />
     }
   }
-
-  const grossAmount = Number.parseFloat(withdrawAmount) || 0
-  const feeAmount = calculateFee(grossAmount)
-  const netAmount = calculateNetAmount(grossAmount)
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white p-4">
+      <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Link href="/dashboard">
@@ -183,10 +156,7 @@ export default function WithdrawPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <div className="flex items-center space-x-2">
-              <img src="/fcb-logo.jpg" alt="FCB Logo" className="h-8 w-8 rounded" />
-              <h1 className="text-xl font-bold">Withdraw Funds</h1>
-            </div>
+            <h1 className="text-xl font-bold">Withdraw Funds</h1>
           </div>
           <div className="text-right">
             <div className="text-sm opacity-90">Available Balance</div>
@@ -196,34 +166,10 @@ export default function WithdrawPage() {
       </div>
 
       <div className="p-4 space-y-4">
-        {/* Withdrawal Schedule Alert */}
-        <Card className={`${canWithdraw ? "bg-green-50 border-green-200" : "bg-orange-50 border-orange-200"}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <Calendar className={`h-5 w-5 ${canWithdraw ? "text-green-600" : "text-orange-600"}`} />
-              <div>
-                {canWithdraw ? (
-                  <div>
-                    <div className="font-bold text-green-800">✅ Withdrawal Available Today</div>
-                    <div className="text-sm text-green-600">You can withdraw funds today (Wednesday/Saturday)</div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="font-bold text-orange-800">⏰ Withdrawal Not Available</div>
-                    <div className="text-sm text-orange-600">
-                      Next withdrawal date: <strong>{nextWithdrawDate}</strong> (Wednesday/Saturday only)
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Withdrawal Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Withdrawal Details</CardTitle>
+            <CardTitle>Withdrawal Request</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Amount Input */}
@@ -232,86 +178,90 @@ export default function WithdrawPage() {
               <Input
                 id="amount"
                 type="number"
-                placeholder={`Minimum: ${minWithdraw}`}
+                placeholder={`Min: ${minWithdraw}, Max: ${maxWithdraw}`}
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}
                 min={minWithdraw}
-                max={userBalance}
-                disabled={!canWithdraw}
+                max={maxWithdraw}
               />
               <div className="text-xs text-gray-500">
-                Minimum: KES {minWithdraw} • Available: KES {userBalance.toFixed(2)}
+                Minimum: KES {minWithdraw} • Maximum: KES {maxWithdraw}
               </div>
             </div>
 
-            {/* Live Fee Calculation */}
-            {grossAmount >= minWithdraw && (
-              <div className="bg-blue-50 p-4 rounded-lg space-y-2">
-                <h4 className="font-medium text-blue-800">Withdrawal Breakdown</h4>
-                <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span>Gross Amount:</span>
-                    <span className="font-medium">KES {grossAmount.toFixed(2)}</span>
+            {/* Fee Breakdown */}
+            {withdrawAmount && Number.parseFloat(withdrawAmount) > 0 && (
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Withdrawal Amount:</span>
+                      <span className="font-medium">KES {Number.parseFloat(withdrawAmount).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-red-600">
+                      <span>Processing Fee (10%):</span>
+                      <span className="font-medium">- KES {processingFee.toFixed(2)}</span>
+                    </div>
+                    <div className="border-t pt-2 flex justify-between font-bold text-green-600">
+                      <span>You will receive:</span>
+                      <span>KES {netAmount.toFixed(2)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-red-600">
-                    <span>Processing Fee (10%):</span>
-                    <span className="font-medium">- KES {feeAmount.toFixed(2)}</span>
-                  </div>
-                  <div className="border-t pt-1 flex justify-between font-bold text-green-600">
-                    <span>Net Amount:</span>
-                    <span>KES {netAmount.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
 
-            {/* Payment Method */}
+            {/* Withdrawal Method */}
             <div className="space-y-2">
-              <Label>Withdrawal Method</Label>
-              <div className="grid grid-cols-3 gap-2">
-                <Button
-                  variant={withdrawMethod === "mpesa" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setWithdrawMethod("mpesa")}
-                  disabled={!canWithdraw}
-                >
-                  <Smartphone className="h-4 w-4 mr-1" />
-                  M-Pesa
-                </Button>
-                <Button
-                  variant={withdrawMethod === "bank" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setWithdrawMethod("bank")}
-                  disabled={!canWithdraw}
-                >
-                  <Building2 className="h-4 w-4 mr-1" />
-                  Bank
-                </Button>
-                <Button
-                  variant={withdrawMethod === "card" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setWithdrawMethod("card")}
-                  disabled={!canWithdraw}
-                >
-                  <CreditCard className="h-4 w-4 mr-1" />
-                  Card
-                </Button>
-              </div>
+              <Label htmlFor="method">Withdrawal Method</Label>
+              <Select value={withdrawMethod} onValueChange={setWithdrawMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select withdrawal method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mpesa">
+                    <div className="flex items-center">
+                      <Smartphone className="h-4 w-4 mr-2 text-green-600" />
+                      M-Pesa
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="bank">
+                    <div className="flex items-center">
+                      <Building2 className="h-4 w-4 mr-2 text-blue-600" />
+                      Bank Transfer
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="airtel">
+                    <div className="flex items-center">
+                      <Smartphone className="h-4 w-4 mr-2 text-red-600" />
+                      Airtel Money
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Phone Number */}
+            {/* Account Details */}
             <div className="space-y-2">
-              <Label htmlFor="phone">
+              <Label htmlFor="account">
                 {withdrawMethod === "mpesa" && "M-Pesa Phone Number"}
-                {withdrawMethod === "bank" && "Phone Number"}
-                {withdrawMethod === "card" && "Phone Number"}
+                {withdrawMethod === "airtel" && "Airtel Money Phone Number"}
+                {withdrawMethod === "bank" && "Bank Account Number"}
+                {!withdrawMethod && "Account Details"}
               </Label>
               <Input
-                id="phone"
-                placeholder="254712345678"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                disabled={!canWithdraw}
+                id="account"
+                placeholder={
+                  withdrawMethod === "mpesa"
+                    ? "254712345678"
+                    : withdrawMethod === "airtel"
+                      ? "254712345678"
+                      : withdrawMethod === "bank"
+                        ? "Account number"
+                        : "Enter account details"
+                }
+                value={accountDetails}
+                onChange={(e) => setAccountDetails(e.target.value)}
               />
             </div>
 
@@ -319,16 +269,10 @@ export default function WithdrawPage() {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={
-                    !canWithdraw ||
-                    !withdrawAmount ||
-                    Number.parseFloat(withdrawAmount) < minWithdraw ||
-                    !phoneNumber ||
-                    isProcessing
-                  }
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  disabled={!withdrawAmount || !withdrawMethod || !accountDetails || isProcessing}
                 >
-                  {isProcessing ? "Processing..." : `Withdraw KES ${netAmount.toFixed(2)}`}
+                  {isProcessing ? "Processing..." : "Submit Withdrawal Request"}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -339,27 +283,28 @@ export default function WithdrawPage() {
                       <p>Please confirm your withdrawal details:</p>
                       <div className="bg-gray-50 p-3 rounded text-sm">
                         <div>
-                          <strong>Gross Amount:</strong> KES {grossAmount.toFixed(2)}
-                        </div>
-                        <div className="text-red-600">
-                          <strong>Processing Fee:</strong> KES {feeAmount.toFixed(2)} (10%)
-                        </div>
-                        <div className="text-green-600 font-bold">
-                          <strong>Net Amount:</strong> KES {netAmount.toFixed(2)}
+                          <strong>Amount:</strong> KES {withdrawAmount}
                         </div>
                         <div>
-                          <strong>Method:</strong> {withdrawMethod.toUpperCase()}
+                          <strong>Fee:</strong> KES {processingFee.toFixed(2)}
                         </div>
                         <div>
-                          <strong>Phone:</strong> {phoneNumber}
+                          <strong>You'll receive:</strong> KES {netAmount.toFixed(2)}
+                        </div>
+                        <div>
+                          <strong>Method:</strong> {withdrawMethod?.toUpperCase()}
+                        </div>
+                        <div>
+                          <strong>Account:</strong> {accountDetails}
                         </div>
                       </div>
+                      <p className="text-red-600 text-xs">This action cannot be undone.</p>
                     </div>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleWithdraw} className="bg-blue-600 hover:bg-blue-700">
+                  <AlertDialogAction onClick={handleWithdraw} className="bg-green-600 hover:bg-green-700">
                     Confirm Withdrawal
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -378,25 +323,25 @@ export default function WithdrawPage() {
           </CardHeader>
           <CardContent className="text-sm space-y-2 text-blue-700">
             <div className="flex justify-between">
-              <span>Withdrawal Days:</span>
-              <span className="font-medium">Wednesday & Saturday</span>
+              <span>Processing Time:</span>
+              <span className="font-medium">1-3 Business Days</span>
             </div>
             <div className="flex justify-between">
-              <span>Processing Time:</span>
-              <span className="font-medium">1-24 hours</span>
+              <span>Processing Fee:</span>
+              <span className="font-medium text-red-600">10% of withdrawal amount</span>
             </div>
             <div className="flex justify-between">
               <span>Minimum Amount:</span>
               <span className="font-medium">KES {minWithdraw}</span>
             </div>
             <div className="flex justify-between">
-              <span>Processing Fee:</span>
-              <span className="font-medium">10%</span>
+              <span>Daily Limit:</span>
+              <span className="font-medium">KES 5,000</span>
             </div>
-            <Alert className="mt-3 border-green-200 bg-green-50">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800 text-xs">
-                All withdrawals are processed securely within 24 hours on withdrawal days.
+            <Alert className="mt-3 border-orange-200 bg-orange-50">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800 text-xs">
+                Ensure your account details are correct. Incorrect details may result in failed transactions.
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -406,49 +351,62 @@ export default function WithdrawPage() {
         {withdrawalHistory.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Withdrawal History</CardTitle>
+              <CardTitle>Recent Withdrawals</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Gross Amount</TableHead>
-                      <TableHead>Fee</TableHead>
-                      <TableHead>Net Amount</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {withdrawalHistory.map((withdrawal) => (
-                      <TableRow key={withdrawal.id}>
-                        <TableCell className="text-sm">{withdrawal.date}</TableCell>
-                        <TableCell className="font-medium">KES {withdrawal.amount.toFixed(2)}</TableCell>
-                        <TableCell className="text-red-600">KES {withdrawal.fee.toFixed(2)}</TableCell>
-                        <TableCell className="font-bold text-green-600">
-                          KES {withdrawal.netAmount.toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{withdrawal.method.toUpperCase()}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(withdrawal.status)}>
-                            <div className="flex items-center space-x-1">
-                              {getStatusIcon(withdrawal.status)}
-                              <span className="text-xs">{withdrawal.status}</span>
-                            </div>
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="space-y-3">
+                {withdrawalHistory.slice(0, 5).map((withdrawal) => (
+                  <div key={withdrawal.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      {getStatusIcon(withdrawal.status)}
+                      <div>
+                        <div className="font-medium">KES {withdrawal.netAmount.toFixed(2)}</div>
+                        <div className="text-xs text-gray-500">
+                          {withdrawal.date} • {withdrawal.method?.toUpperCase()}
+                        </div>
+                      </div>
+                    </div>
+                    <Badge className={getStatusColor(withdrawal.status)}>{withdrawal.status}</Badge>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         )}
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+        <div className="flex justify-around py-2">
+          <Link href="/dashboard" className="flex flex-col items-center p-2 text-gray-600">
+            <Home className="h-5 w-5" />
+            <span className="text-xs mt-1">Home</span>
+          </Link>
+          <Link href="/tasks" className="flex flex-col items-center p-2 text-gray-600">
+            <FileText className="h-5 w-5" />
+            <span className="text-xs mt-1">Task</span>
+          </Link>
+          <Link href="/vip" className="flex flex-col items-center p-2 text-gray-600">
+            <Trophy className="h-5 w-5" />
+            <span className="text-xs mt-1">VIP</span>
+          </Link>
+          <Link href="/profits" className="flex flex-col items-center p-2 text-gray-600">
+            <TrendingUp className="h-5 w-5" />
+            <span className="text-xs mt-1">Profits</span>
+          </Link>
+          <Link href="/withdraw" className="flex flex-col items-center p-2 text-blue-600">
+            <ArrowDownLeft className="h-4 w-4" />
+            <span className="text-xs mt-1">Withdraw</span>
+          </Link>
+          <Link href="/recharge" className="flex flex-col items-center p-2 text-gray-600">
+            <ArrowUpRight className="h-4 w-4" />
+            <span className="text-xs mt-1">Deposit</span>
+          </Link>
+          <Link href="/profile" className="flex flex-col items-center p-2 text-gray-600">
+            <User className="h-5 w-5" />
+            <span className="text-xs mt-1">Profile</span>
+          </Link>
+        </div>
       </div>
     </div>
   )
