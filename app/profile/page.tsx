@@ -40,7 +40,6 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   LogOut,
-  RotateCcw,
   Users,
   Gift,
   Lock,
@@ -142,30 +141,6 @@ export default function ProfilePage() {
 
     // Redirect to login page
     router.push("/")
-  }
-
-  const handleAccountReset = () => {
-    // Reset only balance and tasks, keep user info
-    localStorage.setItem("userBalance", "0")
-    localStorage.setItem("completedTasks", "[]")
-    localStorage.setItem("referralEarnings", "0")
-    localStorage.setItem("taskEarnings", "0")
-    localStorage.setItem("hasClaimedReferralBonus", "false")
-    localStorage.removeItem("referralStatus")
-
-    // Update state
-    setUserBalance(0)
-    setReferralEarnings(0)
-    setTaskEarnings(0)
-    setHasClaimedReferralBonus(false)
-    setReferralStatus({
-      hasInvited: false,
-      invitedUsers: [],
-      canClaim: false,
-    })
-    setUserInfo((prev) => ({ ...prev, totalEarnings: "KES 0.00" }))
-
-    alert("Account reset successfully! Your balance and tasks have been cleared.")
   }
 
   const validateReferralCode = () => {
@@ -476,38 +451,9 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Account Actions */}
+        {/* Logout Section */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Account Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 pt-0">
-            {/* Account Reset */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-start bg-transparent text-sm h-10">
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Reset Account
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Reset Account</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will reset your balance to zero and clear all completed tasks. Your profile information will
-                    remain unchanged. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleAccountReset} className="bg-orange-600 hover:bg-orange-700">
-                    Reset Account
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
-            {/* Logout */}
+          <CardContent className="p-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
