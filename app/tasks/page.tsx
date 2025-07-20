@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Home, FileText, Trophy, TrendingUp, User, Play, Clock, CheckCircle, Lock } from "lucide-react"
 import Link from "next/link"
 
@@ -14,11 +13,13 @@ export default function TasksPage() {
   const [userBalance, setUserBalance] = useState(0)
   const [completedTasks, setCompletedTasks] = useState<number[]>([])
   const [taskInProgress, setTaskInProgress] = useState<number | null>(null)
+  const [lastResetDate, setLastResetDate] = useState("")
 
   // Load data from localStorage on component mount
   useEffect(() => {
     const savedBalance = localStorage.getItem("userBalance")
     const savedCompletedTasks = localStorage.getItem("completedTasks")
+    const savedLastReset = localStorage.getItem("lastTaskReset")
 
     if (savedBalance) {
       setUserBalance(Number.parseFloat(savedBalance))
@@ -26,6 +27,12 @@ export default function TasksPage() {
     if (savedCompletedTasks) {
       setCompletedTasks(JSON.parse(savedCompletedTasks))
     }
+    if (savedLastReset) {
+      setLastResetDate(savedLastReset)
+    }
+
+    // Check if tasks need to be reset at midnight
+    checkMidnightReset()
   }, [])
 
   // Save data to localStorage whenever it changes
@@ -36,6 +43,38 @@ export default function TasksPage() {
   useEffect(() => {
     localStorage.setItem("completedTasks", JSON.stringify(completedTasks))
   }, [completedTasks])
+
+  // Check if tasks should be reset at midnight
+  const checkMidnightReset = () => {
+    const today = new Date().toDateString()
+    const savedResetDate = localStorage.getItem("lastTaskReset")
+
+    if (savedResetDate !== today) {
+      // Reset tasks for new day
+      setCompletedTasks([])
+      localStorage.setItem("completedTasks", "[]")
+      localStorage.setItem("lastTaskReset", today)
+      setLastResetDate(today)
+    }
+  }
+
+  // Set up midnight reset timer
+  useEffect(() => {
+    const now = new Date()
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(0, 0, 0, 0)
+
+    const timeUntilMidnight = tomorrow.getTime() - now.getTime()
+
+    const timer = setTimeout(() => {
+      checkMidnightReset()
+      // Set up daily interval after first midnight
+      setInterval(checkMidnightReset, 24 * 60 * 60 * 1000)
+    }, timeUntilMidnight)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   const taskItems = [
     {
@@ -62,7 +101,7 @@ export default function TasksPage() {
       status: "available",
       description: "Apple Watch review",
       level: "J1",
-      dailyEarning: "KES 70 per task",
+      dailyEarning: "KES 70 per day for 90 days",
       duration: 4000,
       requiredBalance: 2100, // Requires J1 investment
     },
@@ -76,7 +115,7 @@ export default function TasksPage() {
       status: "available",
       description: "Smartphone analysis",
       level: "J2",
-      dailyEarning: "KES 180 per day for 365 days",
+      dailyEarning: "KES 180 per day for 90 days",
       duration: 5000,
       requiredBalance: 5400, // Requires J2 investment
     },
@@ -90,7 +129,7 @@ export default function TasksPage() {
       status: "available",
       description: "Vehicle product review",
       level: "J3",
-      dailyEarning: "KES 350 per day for 365 days",
+      dailyEarning: "KES 350 per day for 90 days",
       duration: 6000,
       requiredBalance: 10500, // Requires J3 investment
     },
@@ -104,7 +143,7 @@ export default function TasksPage() {
       status: "available",
       description: "Ducati motorcycle review",
       level: "J4",
-      dailyEarning: "KES 600 per day for 365 days",
+      dailyEarning: "KES 600 per day for 90 days",
       duration: 7000,
       requiredBalance: 18000, // Requires J4 investment
     },
@@ -118,7 +157,7 @@ export default function TasksPage() {
       status: "available",
       description: "Luxury sports car review",
       level: "J5",
-      dailyEarning: "KES 1300 per day for 365 days",
+      dailyEarning: "KES 1300 per day for 90 days",
       duration: 8000,
       requiredBalance: 39000, // Requires J5 investment
     },
@@ -132,7 +171,7 @@ export default function TasksPage() {
       status: "available",
       description: "Luxury property review",
       level: "J6",
-      dailyEarning: "KES 3200 per day for 365 days",
+      dailyEarning: "KES 3200 per day for 90 days",
       duration: 10000,
       requiredBalance: 96000, // Requires J6 investment
     },
@@ -154,9 +193,15 @@ export default function TasksPage() {
 
     // Simulate task completion after duration
     setTimeout(() => {
-      setUserBalance((prev) => prev + task.reward)
+      const newBalance = userBalance + task.reward
+      const newTaskEarnings = Number.parseFloat(localStorage.getItem("taskEarnings") || "0") + task.reward
+
+      setUserBalance(newBalance)
       setCompletedTasks((prev) => [...prev, taskId])
       setTaskInProgress(null)
+
+      // Update task earnings
+      localStorage.setItem("taskEarnings", newTaskEarnings.toString())
 
       // Show success message
       alert(`Task completed! You earned KES ${task.reward}`)
@@ -219,21 +264,16 @@ export default function TasksPage() {
     return "bg-orange-500 hover:bg-orange-600 text-white"
   }
 
-  const membershipList = [
-    { phone: "****3922", amount: "675KES", time: "Income this week" },
-    { phone: "****3965", amount: "648KES", time: "Income this week" },
-    { phone: "****1030", amount: "57KES", time: "Income this week" },
-    { phone: "****1461", amount: "1944KES", time: "Income this week" },
-    { phone: "****6496", amount: "162KES", time: "Income this week" },
-  ]
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">Task list</h1>
-          <div className="text-sm font-medium text-green-600">Balance: KES {userBalance.toFixed(2)}</div>
+          <div className="text-right">
+            <div className="text-sm font-medium text-green-600">Balance: KES {userBalance.toFixed(2)}</div>
+            <div className="text-xs text-gray-500">Tasks reset daily at 00:00</div>
+          </div>
         </div>
       </div>
 
@@ -365,32 +405,6 @@ export default function TasksPage() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-
-            {/* Membership List */}
-            <div>
-              <h3 className="text-lg font-bold mb-3">Membership list</h3>
-              <div className="space-y-3">
-                {membershipList.map((member, index) => (
-                  <Card key={index}>
-                    <CardContent className="flex items-center justify-between p-3">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={`/placeholder-user-${index + 1}.jpg`} />
-                          <AvatarFallback>U</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">Congratulations {member.phone}</div>
-                          <div className="text-sm text-gray-500">{member.time}</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-red-500">{member.amount}</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
             </div>
           </div>
         )}

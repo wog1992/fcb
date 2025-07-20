@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import {
   Home,
@@ -17,7 +16,6 @@ import {
   Star,
   Building,
   Download,
-  Coins,
   Gift,
   DollarSign,
   Target,
@@ -79,15 +77,9 @@ export default function DashboardPage() {
     { icon: ArrowUpRight, label: "Recharge", href: "/recharge", color: "text-blue-600" },
     { icon: Users, label: "Invitation rewards", href: "/invite-friends", color: "text-blue-600" },
     { icon: Star, label: "VIP", href: "/vip", color: "text-blue-600" },
-    { icon: Coins, label: "Fund", href: "/accounting-records", color: "text-blue-600" },
     { icon: Gift, label: "Turntable of Luck", href: "/turntable", color: "text-blue-600" },
     { icon: Building, label: "Company Profile", href: "/company-profile", color: "text-blue-600" },
     { icon: Download, label: "Unduh App", href: "/download", color: "text-blue-600" },
-  ]
-
-  const membershipList = [
-    { phone: "****3922", amount: "675KES", time: "Income this week" },
-    { phone: "****3965", amount: "648KES", time: "Income this week" },
   ]
 
   // Calculate total earnings breakdown
@@ -100,7 +92,10 @@ export default function DashboardPage() {
       <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-purple-800 text-white p-4">
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm">Choose language</span>
-          <h1 className="text-xl font-bold">FCB</h1>
+          <div className="flex items-center space-x-2">
+            <img src="/fcb-logo.jpg" alt="FCB Logo" className="h-8 w-8 rounded" />
+            <h1 className="text-xl font-bold">FCB</h1>
+          </div>
           <div></div>
         </div>
 
@@ -227,32 +222,6 @@ export default function DashboardPage() {
             </Link>
           </CardContent>
         </Card>
-
-        {/* Membership List */}
-        <div>
-          <h3 className="text-lg font-bold mb-3 text-gray-800">Membership list</h3>
-          <div className="space-y-3">
-            {membershipList.map((member, index) => (
-              <Card key={index}>
-                <CardContent className="flex items-center justify-between p-3">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={`/placeholder-user-${index + 1}.jpg`} />
-                      <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium text-sm">Congratulations {member.phone}</div>
-                      <div className="text-xs text-gray-500">{member.time}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-red-500 text-sm">{member.amount}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Bottom Navigation */}
@@ -276,7 +245,7 @@ export default function DashboardPage() {
           </Link>
           <Link href="/profile" className="flex flex-col items-center p-2 text-gray-600">
             <User className="h-5 w-5" />
-            <span className="text-xs mt-1">My</span>
+            <span className="text-xs mt-1">Profile</span>
           </Link>
         </div>
       </div>
