@@ -33,7 +33,7 @@ export default function VIPPage() {
       name: "J1 Package",
       price: 2100,
       dailyEarning: 70,
-      duration: 90,
+      duration: 365,
       totalReturn: 2550,
       icon: Star,
       color: "from-blue-500 to-purple-600",
