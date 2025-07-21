@@ -135,50 +135,6 @@ export default function RegisterPage() {
         joinDate: new Date().toLocaleDateString(),
         isLoggedIn: true,
       }
-import { supabase } from "@/lib/supabase"; // make sure this is properly configured
-
-const handleRegister = async () => {
-  setIsLoading(true);
-  setErrors({});
-
-  // Check if phone number already exists
-  const { data: existingUsers, error: checkError } = await supabase
-    .from("users")
-    .select("id")
-    .eq("phone", formData.phone);
-
-  if (checkError) {
-    console.error("Phone check failed:", checkError.message);
-    setIsLoading(false);
-    return;
-  }
-
-  if (existingUsers && existingUsers.length > 0) {
-    setErrors({ phone: "Phone number already registered" });
-    setIsLoading(false);
-    return;
-  }
-
-  // Proceed with your existing user creation logic
-  const { error } = await supabase.from("users").insert([
-    {
-      full_name: formData.fullName,
-      phone: formData.phone,
-      email: formData.email,
-      password: formData.password,
-      referral_code: formData.referralCode,
-    },
-  ]);
-
-  if (error) {
-    console.error("Error creating user:", error.message);
-    setErrors({ submit: "Failed to register user" });
-  } else {
-    router.push("/dashboard"); // Or wherever you redirect after signup
-  }
-
-  setIsLoading(false);
-};
 
       // Save to localStorage
       localStorage.setItem("isLoggedIn", "true")
@@ -255,7 +211,7 @@ const handleRegister = async () => {
               </div>
               {errors.fullName && <p className="text-sm text-red-600">{errors.fullName}</p>}
             </div>
-           
+
             {/* Phone Number */}
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number *</Label>
