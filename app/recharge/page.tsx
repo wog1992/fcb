@@ -37,8 +37,32 @@ export default function RechargePage() {
       alert("Please select a package and paste your M-Pesa message")
       return
     }
+
+    // Store the pending package and message for admin approval
+    const depositRequest = {
+      id: Date.now().toString(),
+      package: selectedPackage,
+      packageName: packages.find((p) => p.id === selectedPackage)?.name,
+      amount: packages.find((p) => p.id === selectedPackage)?.amount,
+      mpesaMessage: mpesaMessage,
+      status: "Pending Admin Confirmation",
+      date: new Date().toISOString(),
+      adminPhone: adminPhone,
+      adminName: adminName,
+    }
+
+    // Save to localStorage for admin review
+    const existingRequests = JSON.parse(localStorage.getItem("depositRequests") || "[]")
+    existingRequests.push(depositRequest)
+    localStorage.setItem("depositRequests", JSON.stringify(existingRequests))
+    localStorage.setItem("awaitingAdminConfirmation", "true")
+
     console.log("Submitting deposit:", { selectedPackage, mpesaMessage })
     alert("Deposit request submitted! Admin will verify and approve shortly.")
+
+    // Reset form
+    setSelectedPackage("")
+    setMpesaMessage("")
   }
 
   return (
@@ -51,7 +75,10 @@ export default function RechargePage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">Recharge</h1>
+          <div className="flex items-center space-x-2">
+            <img src="/fcb-logo.jpg" alt="FCB Logo" className="h-8 w-8 rounded" />
+            <h1 className="text-xl font-bold">Recharge</h1>
+          </div>
         </div>
       </div>
 

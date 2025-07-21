@@ -18,21 +18,18 @@ export default function WithdrawPage() {
   const [withdrawAmount, setWithdrawAmount] = useState("")
   const [withdrawMethod, setWithdrawMethod] = useState("M-Pesa")
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [withdrawalHistory, setWithdrawalHistory] = useState([])
+  const [withdrawalHistory, setWithdrawalHistory] = useState<any[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
 
   const minWithdraw = 120
+  const canWithdraw = [3, 6].includes(new Date().getDay()) // Wed & Sat
 
   const calculateFee = (amount: number) => amount * 0.05
   const calculateNetAmount = (amount: number) => amount - calculateFee(amount)
 
-  const canWithdraw = [3, 6].includes(new Date().getDay())
-
   useEffect(() => {
     const fetchData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
       const { data: profile } = await supabase
@@ -77,12 +74,10 @@ export default function WithdrawPage() {
 
     const fee = calculateFee(amount)
     const netAmount = calculateNetAmount(amount)
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
 
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      alert("User not authenticated.")
+      alert("User not authenticated")
       setIsProcessing(false)
       return
     }
@@ -119,6 +114,7 @@ export default function WithdrawPage() {
     setUserBalance(userBalance - amount)
     setWithdrawAmount("")
     setIsProcessing(false)
+
     alert(`Withdrawal request submitted! You will receive KES ${netAmount.toFixed(2)} after processing.`)
   }
 
@@ -127,8 +123,9 @@ export default function WithdrawPage() {
       <Card>
         <CardContent className="space-y-4 p-6">
           <h2 className="text-xl font-bold">Withdraw</h2>
+
           <div>
-            <label className="block font-medium mb-1">Withdrawal method</label>
+            <label className="block font-medium mb-1">Withdrawal Method</label>
             <Select value={withdrawMethod} onValueChange={setWithdrawMethod}>
               <SelectTrigger>
                 <SelectValue placeholder="Select withdrawal method" />
@@ -139,14 +136,15 @@ export default function WithdrawPage() {
               </SelectContent>
             </Select>
           </div>
+
           <div>
-            <label className="block font-medium mb-1">Withdrawal wallet</label>
-            <p>Commission Wallet [KES {userBalance.toFixed(2)}]</p>
+            <label className="block font-medium mb-1">Commission Wallet</label>
+            <p>KES {userBalance.toFixed(2)}</p>
           </div>
+
           <div>
-            <label className="block font-medium mb-1">Withdrawal amount (Minimum: KES {minWithdraw})</label>
+            <label className="block font-medium mb-1">Withdrawal Amount (Min: {minWithdraw})</label>
             <Input
-              id="amount"
               type="number"
               placeholder={`Minimum: ${minWithdraw}`}
               value={withdrawAmount}
@@ -156,7 +154,7 @@ export default function WithdrawPage() {
               disabled={!canWithdraw}
             />
             <div className="grid grid-cols-3 gap-2 mt-2">
-              {[120, 500, 1000, 2000, 5500, 10000, 20000, 50000, 100000, 200000, 500000].map((amount) => (
+              {[120, 500, 1000, 2000, 5500, 10000, 20000, 50000].map((amount) => (
                 <button
                   key={amount}
                   type="button"
@@ -169,11 +167,21 @@ export default function WithdrawPage() {
               ))}
             </div>
           </div>
+
           <div>
-            <label className="block font-medium mb-1">Fund password</label>
-            <Input id="fund-password" type="password" placeholder="Please input fund password" disabled />
+            <label className="block font-medium mb-1">Fund Password</label>
+            <Input
+              type="password"
+              placeholder="Please input fund password"
+              disabled
+            />
           </div>
-          <Button onClick={handleWithdraw} disabled={isProcessing || !canWithdraw} className="w-full">
+
+          <Button
+            onClick={handleWithdraw}
+            disabled={isProcessing || !canWithdraw}
+            className="w-full"
+          >
             {isProcessing ? "Processing..." : "Submit"}
           </Button>
         </CardContent>
@@ -195,7 +203,7 @@ export default function WithdrawPage() {
                 </tr>
               </thead>
               <tbody>
-                {withdrawalHistory.map((w: any) => (
+                {withdrawalHistory.map((w) => (
                   <tr key={w.id}>
                     <td>{new Date(w.created_at).toLocaleDateString()}</td>
                     <td>KES {w.amount}</td>
