@@ -439,6 +439,22 @@ export default function WithdrawPage() {
                               {getStatusIcon(withdrawal.status)}
                               <span className="text-xs">{withdrawal.status}</span>
                             </div>
+                            <div class="section">
+                                <label class="label">Withdrawal amount (Minimum: 120)</label>
+                                    <div class="amount-grid">
+                                          <div class="amount-btn">120</div>
+                                                <div class="amount-btn">500</div>
+                                                      <div class="amount-btn">1000</div>
+                                                            <div class="amount-btn">2000</div>
+                                                                  <div class="amount-btn">5500</div>
+                                                                        <div class="amount-btn">10000</div>
+                                                                              <div class="amount-btn">20000</div>
+                                                                                    <div class="amount-btn">50000</div>
+                                                                                          <div class="amount-btn">100000</div>
+                                                                                                <div class="amount-btn">200000</div>
+                                                                                                      <div class="amount-btn">500000</div>
+                                                                                                          </div>
+                                                                                                            </div>
                           </Badge>
                         </TableCell>
                       </TableRow>
