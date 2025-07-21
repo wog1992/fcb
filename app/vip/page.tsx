@@ -40,7 +40,7 @@ export default function VIPPage() {
       features: [
         "Daily earning: KES 70",
         "365 days duration",
-        "Total return: KES 2,5550",
+        "Total return: KES 25550",
         "Basic support",
         "Task completion rewards",
       ],
@@ -57,7 +57,7 @@ export default function VIPPage() {
       features: [
         "Daily earning: KES 186",
         "90 days duration",
-        "Total return: KES 6,790",
+        "Total return: KES 65,700",
         "Priority support",
         "Higher task rewards",
         "Bonus referral commissions",
