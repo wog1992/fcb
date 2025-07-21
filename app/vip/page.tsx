@@ -47,75 +47,70 @@ export default function VIPPage() {
       name: "J1",
       price: 2100,
       dailyEarning: 70,
-      duration: 90,
-      totalReturn: 6300,
-      profit: 4200,
+      duration: 365,
+      totalReturn: 25,500,
       level: "Basic",
       color: "from-blue-500 to-blue-600",
-      features: ["Daily Tasks", "Basic Support", "90 Days Duration"],
+      features: ["Daily Tasks", "Basic Support", "365 Days Duration"],
     },
     {
       id: "j2",
       name: "J2",
       price: 5400,
       dailyEarning: 180,
-      duration: 90,
-      totalReturn: 16200,
-      profit: 10800,
+      duration: 365,
+      totalReturn: 65,700,
       level: "Standard",
       color: "from-purple-500 to-purple-600",
-      features: ["Daily Tasks", "Priority Support", "90 Days Duration", "Bonus Tasks"],
+      features: ["Daily Tasks", "Priority Support", "365 Days Duration", "Bonus Tasks"],
     },
     {
       id: "j3",
       name: "J3",
       price: 10500,
       dailyEarning: 350,
-      duration: 90,
-      totalReturn: 31500,
-      profit: 21000,
+      duration: 365,
+      totalReturn: 127,750,
       level: "Premium",
       color: "from-orange-500 to-orange-600",
-      features: ["Daily Tasks", "VIP Support", "90 Days Duration", "Bonus Tasks", "Referral Bonus"],
+      features: ["Daily Tasks", "VIP Support", "365 Days Duration", "Bonus Tasks", "Referral Bonus"],
     },
     {
       id: "j4",
       name: "J4",
       price: 18000,
       dailyEarning: 600,
-      duration: 90,
-      totalReturn: 54000,
-      profit: 36000,
+      duration: 365,
+      totalReturn: 219000,
       level: "Elite",
       color: "from-green-500 to-green-600",
-      features: ["Daily Tasks", "Elite Support", "90 Days Duration", "Premium Tasks", "High Referral Bonus"],
+      features: ["Daily Tasks", "Elite Support", "365 Days Duration", "Premium Tasks", "High Referral Bonus"],
     },
     {
       id: "j5",
       name: "J5",
       price: 39000,
       dailyEarning: 1300,
-      duration: 90,
-      totalReturn: 117000,
-      profit: 78000,
+      duration: 365,
+      totalReturn: 474500,
       level: "Master",
       color: "from-red-500 to-red-600",
-      features: ["Daily Tasks", "Master Support", "90 Days Duration", "Exclusive Tasks", "Maximum Referral Bonus"],
+      features: ["Daily Tasks", "Master Support", "365 Days Duration", "Exclusive Tasks", "Maximum Referral Bonus"],
     },
     {
       id: "j6",
       name: "J6",
       price: 96000,
       dailyEarning: 3200,
-      duration: 90,
-      totalReturn: 288000,
+      duration: 365,
+      totalReturn: 1168000,
       profit: 192000,
       level: "Diamond",
       color: "from-yellow-500 to-yellow-600",
       features: [
         "Daily Tasks",
         "Diamond Support",
-        "90 Days Duration",
+        "365 Days Duration",
         "Premium Exclusive Tasks",
         "Ultimate Referral Bonus",
       ],
@@ -181,13 +176,13 @@ export default function VIPPage() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="font-bold text-green-600">J1 Package</div>
-                <div className="text-xs text-gray-600">KES 70/day × 90 days</div>
+                <div className="text-xs text-gray-600">KES 70/day × 365 days</div>
                 <div className="font-bold">Total: KES 6,300</div>
                 <div className="text-xs text-green-600">Profit: KES 4,200</div>
               </div>
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="font-bold text-blue-600">J2 Package</div>
-                <div className="text-xs text-gray-600">KES 180/day × 90 days</div>
+                <div className="text-xs text-gray-600">KES 180/day × 365 days</div>
                 <div className="font-bold">Total: KES 16,200</div>
                 <div className="text-xs text-blue-600">Profit: KES 10,800</div>
               </div>
@@ -226,14 +221,6 @@ export default function VIPPage() {
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Profit Margin</span>
-                    <span className="font-bold text-green-600">{getROI(pkg)}% ROI</span>
-                  </div>
-                  <Progress value={Number.parseInt(getROI(pkg))} className="h-2" />
-                </div>
-
                 <div className="space-y-2 mb-4">
                   {pkg.features.map((feature, index) => (
                     <div key={index} className="flex items-center text-sm">
@@ -245,7 +232,7 @@ export default function VIPPage() {
 
                 <div className="bg-green-50 p-3 rounded-lg mb-4">
                   <div className="text-sm text-green-800">
-                    <strong>Total Profit:</strong> KES {pkg.profit.toLocaleString()} over 90 days
+                    <strong>Total Profit:</strong> KES {pkg.profit.toLocaleString()} over 365 days
                   </div>
                 </div>
 
@@ -273,7 +260,7 @@ export default function VIPPage() {
             <div className="space-y-3 text-sm">
               <div className="flex items-center">
                 <Users className="h-4 w-4 text-purple-600 mr-3" />
-                <span>Earn daily profits for 90 consecutive days</span>
+                <span>Earn daily profits for 365  days</span>
               </div>
               <div className="flex items-center">
                 <TrendingUpIcon className="h-4 w-4 text-purple-600 mr-3" />
