@@ -92,10 +92,7 @@ export default function DashboardPage() {
       <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-purple-800 text-white p-4">
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm">Choose language</span>
-          <div className="flex items-center space-x-2">
-            <img src="/fcb-logo.jpg" alt="FCB Logo" className="h-8 w-8 rounded" />
-            <h1 className="text-xl font-bold">FCB</h1>
-          </div>
+          <h1 className="text-xl font-bold">FCB</h1>
           <div></div>
         </div>
 
